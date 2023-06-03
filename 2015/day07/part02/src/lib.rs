@@ -1,8 +1,4 @@
-use std::{
-    collections::BTreeMap,
-    str::FromStr,
-    sync::{Mutex, RwLock},
-};
+use std::{collections::BTreeMap, str::FromStr, sync::RwLock};
 
 #[derive(Debug)]
 pub struct UnableToParseStr;
