@@ -19,6 +19,8 @@ fn main() {
         // );
     }
     println!("{}", light_grid.iter().flatten().filter(|l| **l).count());
+
+    print_light_grid(&light_grid);
 }
 
 fn execute_instruction(instruction: &Instruction, light_grid: &mut [[bool; 1000]; 1000]) {
@@ -32,5 +34,20 @@ fn execute_instruction(instruction: &Instruction, light_grid: &mut [[bool; 1000]
                 }
             }
         }
+    }
+}
+
+fn print_light_grid(light_grid: &[[bool; 1000]; 1000]) {
+    for (i, row) in light_grid.iter().enumerate() {
+        if i % 5 != 0 {
+            continue;
+        }
+        for (i, light) in row.iter().enumerate() {
+            if i % 5 != 0 {
+                continue;
+            }
+            print!("{}", if *light { '#' } else { ' ' });
+        }
+        println!();
     }
 }

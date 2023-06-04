@@ -22,6 +22,8 @@ fn main() {
         "Total brightness {}",
         light_grid.iter().flatten().sum::<u64>()
     );
+
+    print_light_grid(&light_grid);
 }
 
 fn execute_instruction(instruction: &Instruction, light_grid: &mut [[u64; 1000]; 1000]) {
@@ -35,6 +37,20 @@ fn execute_instruction(instruction: &Instruction, light_grid: &mut [[u64; 1000];
                 }
                 Command::Toggle => light_grid[x as usize][y as usize] += 2,
             }
+        }
+    }
+}
+
+fn print_light_grid(light_grid: &[[u64; 1000]; 1000]) {
+    for (i, row) in light_grid.iter().enumerate() {
+        if i % 10 == 0 {
+            continue;
+        }
+        for (i, light) in row.iter().enumerate() {
+            if i % 10 == 0 {
+                continue;
+            }
+            print!("{}", light);
         }
     }
 }
