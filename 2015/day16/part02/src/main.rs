@@ -87,36 +87,46 @@ fn get_master_field(name: String) -> Option<u32> {
 
 fn main() {
     for (i, aunt) in AUNTS.iter().enumerate() {
-        let mut aunt_matches = true;
-        for (field_name, field_value) in aunt.iter() {
-            if let Some(&field_value) = field_value.downcast_ref::<Option<u32>>() {
-                if let Some(field_value) = field_value {
-                    let master_field_value = get_master_field(field_name.to_owned()).unwrap();
-
-                    if field_name == "cats" || field_name == "trees" {
-                        if field_value <= master_field_value {
-                            aunt_matches = false;
-                            break;
-                        }
-                    } else if field_name == "pomeranians" || field_name == "goldfish" {
-                        if field_value >= master_field_value {
-                            aunt_matches = false;
-                            break;
-                        }
-                    } else if field_value != master_field_value {
-                        aunt_matches = false;
-                        break;
-                    }
-                }
-            }
-            if !aunt_matches {
-                break;
-            }
-        }
+        let aunt_matches = validate_aunt(aunt);
 
         if aunt_matches {
             println!("Sue {}: {:?}", i + 1, aunt);
             break;
         }
     }
+}
+
+fn validate_aunt(aunt: &MFCSAM) -> bool {
+    let mut aunt_matches = true;
+    for (field_name, field_value) in get_field_value_pairs(aunt) {
+        let master_field_value = get_master_field(field_name.to_owned()).unwrap();
+
+        if field_name == "cats" || field_name == "trees" {
+            if field_value <= master_field_value {
+                aunt_matches = false;
+                break;
+            }
+        } else if field_name == "pomeranians" || field_name == "goldfish" {
+            if field_value >= master_field_value {
+                aunt_matches = false;
+                break;
+            }
+        } else if field_value != master_field_value {
+            aunt_matches = false;
+            break;
+        }
+    }
+    aunt_matches
+}
+
+fn get_field_value_pairs(mfcsam: &MFCSAM) -> Vec<(String, u32)> {
+    let mut pairs = Vec::new();
+    for (field_name, field_value) in mfcsam.iter() {
+        if let Some(&field_value) = field_value.downcast_ref::<Option<u32>>() {
+            if let Some(field_value) = field_value {
+                pairs.push((field_name.to_owned(), field_value));
+            }
+        }
+    }
+    pairs
 }
