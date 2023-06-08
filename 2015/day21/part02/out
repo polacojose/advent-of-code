@@ -1,0 +1,18 @@
+25
+Inventory { weapon: None, armor: None, left_ring: None, right_ring: Some(Item { name: "Damage +1", cost: 25, damage: 1, armor: 0 }) }
+50
+Inventory { weapon: None, armor: None, left_ring: None, right_ring: Some(Item { name: "Damage +2", cost: 50, damage: 2, armor: 0 }) }
+100
+Inventory { weapon: None, armor: None, left_ring: None, right_ring: Some(Item { name: "Damage +3", cost: 100, damage: 3, armor: 0 }) }
+125
+Inventory { weapon: None, armor: None, left_ring: Some(Item { name: "Damage +1", cost: 25, damage: 1, armor: 0 }), right_ring: Some(Item { name: "Damage +3", cost: 100, damage: 3, armor: 0 }) }
+150
+Inventory { weapon: None, armor: None, left_ring: Some(Item { name: "Damage +2", cost: 50, damage: 2, armor: 0 }), right_ring: Some(Item { name: "Damage +3", cost: 100, damage: 3, armor: 0 }) }
+180
+Inventory { weapon: None, armor: None, left_ring: Some(Item { name: "Damage +3", cost: 100, damage: 3, armor: 0 }), right_ring: Some(Item { name: "Defense +3", cost: 80, damage: 0, armor: 3 }) }
+193
+Inventory { weapon: None, armor: Some(Item { name: "Leather", cost: 13, damage: 0, armor: 1 }), left_ring: Some(Item { name: "Damage +3", cost: 100, damage: 3, armor: 0 }), right_ring: Some(Item { name: "Defense +3", cost: 80, damage: 0, armor: 3 }) }
+211
+Inventory { weapon: None, armor: Some(Item { name: "Chainmail", cost: 31, damage: 0, armor: 2 }), left_ring: Some(Item { name: "Damage +3", cost: 100, damage: 3, armor: 0 }), right_ring: Some(Item { name: "Defense +3", cost: 80, damage: 0, armor: 3 }) }
+233
+Inventory { weapon: None, armor: Some(Item { name: "Splintmail", cost: 53, damage: 0, armor: 3 }), left_ring: Some(Item { name: "Damage +3", cost: 100, damage: 3, armor: 0 }), right_ring: Some(Item { name: "Defense +3", cost: 80, damage: 0, armor: 3 }) }
