@@ -38,7 +38,8 @@ fn find_minimum_spells_to_win(
         spell_list.push(spell);
 
         if total_spell_list_cost(&spell_list) > MIN_MANA.load(Ordering::Relaxed) {
-            break;
+            spell_index += 1;
+            continue;
         }
 
         let result = fight(&player_stats, &boss_stats, &spell_list);
@@ -53,11 +54,6 @@ fn find_minimum_spells_to_win(
                         Ordering::Acquire,
                     ) {
                         println!("New min mana: {}", MIN_MANA.load(Ordering::Relaxed));
-
-                        println!("==============================");
-                        *FIGHT_PRINTING.write().unwrap() = true;
-                        //fight(&player_stats, boss_stats, &spell_list);
-                        *FIGHT_PRINTING.write().unwrap() = false;
                         break;
                     }
                 } else {
