@@ -73,7 +73,6 @@ pub fn display_output_marked(max_x: usize, max_y: usize, marked: Vec<AStarVector
 
             if marked.contains(&AStarVector {
                 door_hash: INITIAL_HASH.to_string(),
-                f_score: None,
                 x: x as isize,
                 y: y as isize,
             }) {

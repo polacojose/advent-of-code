@@ -1,15 +1,12 @@
 use crate::{office::is_wall, INITIAL_HASH};
-use float_ord::FloatOrd;
 use std::{
     collections::{HashMap, HashSet},
     hash::Hash,
-    sync::RwLock,
 };
 
 #[derive(Debug, Clone)]
 pub struct AStarVector {
     pub door_hash: String,
-    pub f_score: Option<FloatOrd<f64>>,
     pub x: isize,
     pub y: isize,
 }
@@ -28,10 +25,7 @@ impl PartialEq for AStarVector {
     }
 }
 
-fn neighbors<HF>(node: &AStarVector, heuristic_function: &HF) -> Vec<AStarVector>
-where
-    HF: Fn(&AStarVector) -> f64,
-{
+fn neighbors(node: &AStarVector) -> Vec<AStarVector> {
     let mut neighbors = Vec::new();
 
     let open_directions = get_open_directions(node);
@@ -41,14 +35,6 @@ where
             Direction::Up => {
                 neighbors.push(AStarVector {
                     door_hash: format!("{}U", node.door_hash),
-                    f_score: Some(FloatOrd {
-                        0: heuristic_function(&AStarVector {
-                            door_hash: format!("{}U", node.door_hash),
-                            f_score: None,
-                            x: node.x,
-                            y: node.y - 1,
-                        }),
-                    }),
                     x: node.x,
                     y: node.y - 1,
                 });
@@ -57,14 +43,6 @@ where
             Direction::Down => {
                 neighbors.push(AStarVector {
                     door_hash: format!("{}D", node.door_hash),
-                    f_score: Some(FloatOrd {
-                        0: heuristic_function(&AStarVector {
-                            door_hash: format!("{}D", node.door_hash),
-                            f_score: None,
-                            x: node.x,
-                            y: node.y + 1,
-                        }),
-                    }),
                     x: node.x,
                     y: node.y + 1,
                 });
@@ -72,28 +50,12 @@ where
             Direction::Left => {
                 neighbors.push(AStarVector {
                     door_hash: format!("{}L", node.door_hash),
-                    f_score: Some(FloatOrd {
-                        0: heuristic_function(&AStarVector {
-                            door_hash: format!("{}L", node.door_hash),
-                            f_score: None,
-                            x: node.x - 1,
-                            y: node.y,
-                        }),
-                    }),
                     x: node.x - 1,
                     y: node.y,
                 });
             }
             Direction::Right => neighbors.push(AStarVector {
                 door_hash: format!("{}R", node.door_hash),
-                f_score: Some(FloatOrd {
-                    0: heuristic_function(&AStarVector {
-                        door_hash: format!("{}R", node.door_hash),
-                        f_score: None,
-                        x: node.x + 1,
-                        y: node.y,
-                    }),
-                }),
                 x: node.x + 1,
                 y: node.y,
             }),
@@ -152,17 +114,7 @@ fn get_open_directions(node: &AStarVector) -> Vec<Direction> {
     directions
 }
 
-use lazy_static::lazy_static;
-
-lazy_static! {
-    static ref LARGEST_HASH_LEN: RwLock<usize> = Default::default();
-    static ref LARGEST_HASH: RwLock<String> = Default::default();
-}
-
-pub fn find_path<HF>(start: AStarVector, end: AStarVector, heuristic_function: HF)
-where
-    HF: Fn(&AStarVector) -> f64,
-{
+pub fn find_path(start: AStarVector, end: AStarVector) -> String {
     let mut open_set: Vec<AStarVector> = vec![start.clone()];
 
     let mut came_from: HashMap<String, String> = Default::default();
@@ -173,22 +125,17 @@ where
     let mut h_score = HashSet::new();
     h_score.insert(start.door_hash);
 
+    let mut largest_hash = String::new();
+
     while let Some(current) = open_set.pop() {
         if current == end {
-            if current.door_hash.len() > *LARGEST_HASH_LEN.read().unwrap() {
-                if *LARGEST_HASH_LEN.read().unwrap() > 0 {
-                    *LARGEST_HASH.write().unwrap() = current.door_hash.clone();
-                }
-                *LARGEST_HASH_LEN.write().unwrap() = current.door_hash.len();
-                println!(
-                    "Success Hash: {}",
-                    current.door_hash.len() - INITIAL_HASH.len()
-                );
+            if current.door_hash.len() > largest_hash.len() {
+                largest_hash = current.door_hash.clone()[INITIAL_HASH.len()..].to_string();
             }
             continue;
         }
 
-        for neighbor in neighbors(&current, &heuristic_function) {
+        for neighbor in neighbors(&current) {
             let tentative_g_score = g_score.get(&current).unwrap() + distance(&current, &neighbor);
             if !h_score.contains(&neighbor.door_hash) {
                 came_from.insert(neighbor.door_hash.clone(), current.door_hash.clone());
@@ -199,6 +146,8 @@ where
             }
         }
     }
+
+    largest_hash
 }
 
 pub fn distance(start: &AStarVector, end: &AStarVector) -> f64 {
@@ -215,26 +164,15 @@ mod tests {
     fn test_find_path() {
         let start = AStarVector {
             door_hash: INITIAL_HASH.to_string(),
-            f_score: Some(FloatOrd { 0: 0.0 }),
             x: 0,
             y: 0,
         };
         let end = AStarVector {
             door_hash: INITIAL_HASH.to_string(),
-            f_score: Some(FloatOrd { 0: 0.0 }),
             x: 10,
             y: 10,
         };
 
-        println!(
-            "{:?}",
-            find_path(start, end.clone(), move |node| {
-                if node.x == 4 && node.y == 1 {
-                    return f64::INFINITY;
-                }
-                let s = distance(node, &end);
-                s
-            })
-        )
+        println!("{:?}", find_path(start, end.clone()))
     }
 }
