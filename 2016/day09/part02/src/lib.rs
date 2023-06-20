@@ -1,140 +1,190 @@
-trait Decoder {
-    fn decode(self, l: impl AsRef<Vec<char>>) -> EasterBunnyDeflaterWrapper;
+const MAX_BUFFER_SIZE: usize = 1000000;
+
+pub struct EasterBunnyInflator {
+    pub reference_chars: Vec<char>,
+    pub pos: usize,
+    state: EasterBunnyInflatorState,
 }
 
-enum EasterBunnyDeflaterWrapper {
-    RawCopy(EasterBunnyDeflater<RawCopy>),
-    TokenDecode(EasterBunnyDeflater<TokenDecode>),
-    TokenExecute(EasterBunnyDeflater<TokenExecute>),
-    Done(EasterBunnyDeflater<Done>),
-}
-
-impl<'a> Decoder for EasterBunnyDeflaterWrapper {
-    fn decode(self, l: impl AsRef<Vec<char>>) -> EasterBunnyDeflaterWrapper {
-        match self {
-            EasterBunnyDeflaterWrapper::RawCopy(rc) => rc.decode(l),
-            EasterBunnyDeflaterWrapper::TokenDecode(td) => td.decode(l),
-            EasterBunnyDeflaterWrapper::TokenExecute(te) => te.decode(l),
-            EasterBunnyDeflaterWrapper::Done(_) => self,
-        }
-    }
-}
-
-pub struct EasterBunnyDeflater<S> {
-    decoded_string: String,
-    pos: usize,
-    state: S,
-}
-
-pub struct RawCopy {}
-impl EasterBunnyDeflater<RawCopy> {
-    fn new() -> Self {
-        EasterBunnyDeflater::<RawCopy> {
-            decoded_string: String::new(),
+impl EasterBunnyInflator {
+    pub fn new(line: impl AsRef<str>) -> Self {
+        let chars = line.as_ref().chars().collect::<Vec<_>>();
+        EasterBunnyInflator {
+            reference_chars: chars,
             pos: 0,
-            state: RawCopy {},
+            state: EasterBunnyInflatorState::RawCopy,
+        }
+    }
+
+    fn new_chars(chars: Vec<char>) -> Self {
+        EasterBunnyInflator {
+            reference_chars: chars,
+            pos: 0,
+            state: EasterBunnyInflatorState::RawCopy,
         }
     }
 }
-impl EasterBunnyDeflater<RawCopy> {
-    pub fn decode_line(line: impl AsRef<str>) -> String {
-        let mut easter_bunny_deflater =
-            EasterBunnyDeflaterWrapper::RawCopy(EasterBunnyDeflater::new());
 
-        let chars: Vec<char> = line.as_ref().chars().collect();
+enum EasterBunnyInflatorState {
+    RawCopy,
+    TokenDecode,
+    TokenExecute {
+        characters: usize,
+        iterations: usize,
+    },
+    Done,
+}
+
+impl Iterator for EasterBunnyInflator {
+    type Item = Vec<char>;
+
+    fn next(&mut self) -> Option<Self::Item> {
         loop {
-            easter_bunny_deflater = easter_bunny_deflater.decode(&chars);
-            match easter_bunny_deflater {
-                EasterBunnyDeflaterWrapper::Done(done) => {
-                    return done.decoded_string;
+            let result = match &self.state {
+                EasterBunnyInflatorState::RawCopy => self.raw_copy(),
+                EasterBunnyInflatorState::TokenDecode => self.token_decode(),
+                EasterBunnyInflatorState::TokenExecute {
+                    characters: _,
+                    iterations: _,
+                } => self.token_execute(),
+                EasterBunnyInflatorState::Done => None,
+            };
+
+            match &result {
+                Some(contents) => {
+                    if contents.len() > 0 {
+                        return result;
+                    }
                 }
-                _ => {}
+                None => return None,
             }
         }
     }
 }
 
-impl Decoder for EasterBunnyDeflater<RawCopy> {
-    fn decode(mut self, l: impl AsRef<Vec<char>>) -> EasterBunnyDeflaterWrapper {
-        if self.pos >= l.as_ref().len() {
-            return EasterBunnyDeflaterWrapper::Done(EasterBunnyDeflater {
-                decoded_string: self.decoded_string,
-                pos: self.pos,
-                state: Done {},
-            });
-        }
+impl EasterBunnyInflator {
+    fn raw_copy(&mut self) -> Option<Vec<char>> {
+        match &self.state {
+            EasterBunnyInflatorState::RawCopy => {
+                if self.pos >= self.reference_chars.len() {
+                    self.state = EasterBunnyInflatorState::Done;
+                    return None;
+                }
 
-        let c = l.as_ref()[self.pos as usize];
-        self.pos += 1;
+                let start_buffer = self.pos;
+                let mut end_buffer =
+                    (start_buffer + MAX_BUFFER_SIZE).min(self.reference_chars.len());
 
-        if c == '(' {
-            EasterBunnyDeflaterWrapper::TokenDecode(EasterBunnyDeflater {
-                decoded_string: self.decoded_string,
-                pos: self.pos,
-                state: TokenDecode {
-                    token_str: String::new(),
-                },
-            })
-        } else {
-            self.decoded_string.push(c);
-            EasterBunnyDeflaterWrapper::RawCopy(self)
+                if let Some(position) = self
+                    .reference_chars
+                    .iter()
+                    .enumerate()
+                    .position(|(i, x)| i >= start_buffer && i < end_buffer && x == &'(')
+                {
+                    end_buffer = end_buffer.min(position);
+                    self.state = EasterBunnyInflatorState::TokenDecode;
+                }
+
+                self.pos = end_buffer;
+
+                return Some(self.reference_chars[start_buffer..end_buffer].to_vec());
+            }
+            _ => {}
         }
+        return Some(vec![]);
     }
 }
 
-struct TokenDecode {
-    token_str: String,
-}
-impl Decoder for EasterBunnyDeflater<TokenDecode> {
-    fn decode(mut self, l: impl AsRef<Vec<char>>) -> EasterBunnyDeflaterWrapper {
-        let c = l.as_ref()[self.pos as usize];
-        self.pos += 1;
-        if c != ')' {
-            self.state.token_str.push(c);
-            EasterBunnyDeflaterWrapper::TokenDecode(self)
-        } else {
-            let (characters_string, iterations_string) =
-                self.state.token_str.split_once("x").unwrap();
-            EasterBunnyDeflaterWrapper::TokenExecute(EasterBunnyDeflater {
-                decoded_string: self.decoded_string,
-                pos: self.pos,
-                state: TokenExecute {
-                    source_chars: String::new(),
+impl EasterBunnyInflator {
+    fn token_decode(&mut self) -> Option<Vec<char>> {
+        match &mut self.state {
+            EasterBunnyInflatorState::TokenDecode {} => {
+                self.pos += 1;
+
+                let end_token_position = self
+                    .reference_chars
+                    .iter()
+                    .enumerate()
+                    .position(|(i, x)| i > self.pos && x == &')')
+                    .unwrap();
+
+                let token_str = String::from_iter(
+                    self.reference_chars[self.pos..end_token_position].into_iter(),
+                );
+
+                let (characters_string, iterations_string) = token_str.split_once("x").unwrap();
+
+                self.state = EasterBunnyInflatorState::TokenExecute {
                     characters: characters_string.parse().unwrap(),
                     iterations: iterations_string.parse().unwrap(),
-                },
-            })
+                };
+
+                self.pos = end_token_position + 1;
+            }
+            _ => {}
+        }
+        return Some(vec![]);
+    }
+}
+
+impl EasterBunnyInflator {
+    fn token_execute(&mut self) -> Option<Vec<char>> {
+        match self.state {
+            EasterBunnyInflatorState::TokenExecute {
+                characters,
+                iterations,
+            } => {
+                let chars = self.reference_chars[self.pos..(self.pos + characters)].to_vec();
+
+                let mut c: Vec<char> = Vec::new();
+                for _ in 0..iterations {
+                    c.extend_from_slice(&chars);
+                }
+
+                self.pos += characters;
+                self.state = EasterBunnyInflatorState::RawCopy;
+                return Some(c);
+            }
+            _ => {}
+        }
+        return Some(vec![]);
+    }
+}
+
+pub struct EasterBunnyRecursiveInflator {
+    inflator: EasterBunnyInflator,
+}
+
+impl EasterBunnyRecursiveInflator {
+    pub fn new(line: impl AsRef<str>) -> Self {
+        let chars: Vec<_> = line.as_ref().chars().collect();
+        Self {
+            inflator: EasterBunnyInflator {
+                reference_chars: chars,
+                pos: 0,
+                state: EasterBunnyInflatorState::RawCopy,
+            },
         }
     }
 }
 
-struct Done {}
-
-struct TokenExecute {
-    source_chars: String,
-    characters: usize,
-    iterations: usize,
-}
-impl Decoder for EasterBunnyDeflater<TokenExecute> {
-    fn decode(mut self, l: impl AsRef<Vec<char>>) -> EasterBunnyDeflaterWrapper {
-        if self.state.source_chars.len() < self.state.characters {
-            let c = l.as_ref()[self.pos as usize];
-            self.pos += 1;
-            self.state.source_chars.push(c);
-            EasterBunnyDeflaterWrapper::TokenExecute(self)
-        } else {
-            if self.state.source_chars.contains('(') && self.state.source_chars.contains(')') {
-                self.state.source_chars = EasterBunnyDeflater::decode_line(self.state.source_chars);
+impl Iterator for EasterBunnyRecursiveInflator {
+    type Item = Vec<char>;
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            let result = self.inflator.next();
+            match result {
+                Some(mut chars) => {
+                    if chars.contains(&'(') {
+                        let position = self.inflator.pos;
+                        chars.append(&mut self.inflator.reference_chars[position..].to_vec());
+                        self.inflator = EasterBunnyInflator::new_chars(chars);
+                    } else {
+                        return Some(chars);
+                    }
+                }
+                None => return None,
             }
-
-            for _ in 0..self.state.iterations {
-                self.decoded_string.push_str(&self.state.source_chars);
-            }
-            EasterBunnyDeflaterWrapper::RawCopy(EasterBunnyDeflater {
-                decoded_string: self.decoded_string,
-                pos: self.pos,
-                state: RawCopy {},
-            })
         }
     }
 }
