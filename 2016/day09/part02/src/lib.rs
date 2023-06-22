@@ -1,4 +1,4 @@
-const MAX_BUFFER_SIZE: usize = 1000000;
+const MAX_BUFFER_SIZE: usize = 10240;
 
 pub struct EasterBunnyInflator {
     pub reference_chars: Vec<char>,
@@ -136,12 +136,20 @@ impl EasterBunnyInflator {
             } => {
                 let chars = self.reference_chars[self.pos..(self.pos + characters)].to_vec();
 
-                let mut c: Vec<char> = Vec::new();
+                let mut c: Vec<char> = Vec::with_capacity(characters * iterations);
                 for _ in 0..iterations {
                     c.extend_from_slice(&chars);
                 }
 
                 self.pos += characters;
+
+                if let Some(char) = self.reference_chars.get(self.pos) {
+                    if char == &'(' {
+                        self.state = EasterBunnyInflatorState::TokenDecode;
+                        return Some(c);
+                    }
+                }
+
                 self.state = EasterBunnyInflatorState::RawCopy;
                 return Some(c);
             }
@@ -178,7 +186,9 @@ impl Iterator for EasterBunnyRecursiveInflator {
                     if chars.contains(&'(') {
                         let position = self.inflator.pos;
                         chars.append(&mut self.inflator.reference_chars[position..].to_vec());
+
                         self.inflator = EasterBunnyInflator::new_chars(chars);
+                        self.inflator.state = EasterBunnyInflatorState::TokenDecode;
                     } else {
                         return Some(chars);
                     }
