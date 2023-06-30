@@ -134,11 +134,11 @@ impl EasterBunnyInflator {
                 characters,
                 iterations,
             } => {
-                let chars = self.reference_chars[self.pos..(self.pos + characters)].to_vec();
+                let chars = self.reference_chars[self.pos..(self.pos + characters)].as_ref();
 
                 let mut c: Vec<char> = Vec::with_capacity(characters * iterations);
                 for _ in 0..iterations {
-                    c.extend_from_slice(&chars);
+                    c.extend_from_slice(chars);
                 }
 
                 self.pos += characters;
@@ -185,7 +185,7 @@ impl Iterator for EasterBunnyRecursiveInflator {
                 Some(mut chars) => {
                     if chars.contains(&'(') {
                         let position = self.inflator.pos;
-                        chars.append(&mut self.inflator.reference_chars[position..].to_vec());
+                        chars.extend_from_slice(self.inflator.reference_chars[position..].as_ref());
 
                         self.inflator = EasterBunnyInflator::new_chars(chars);
                         self.inflator.state = EasterBunnyInflatorState::TokenDecode;

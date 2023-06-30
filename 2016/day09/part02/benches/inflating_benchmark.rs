@@ -2,7 +2,7 @@ use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use inflator::EasterBunnyRecursiveInflator;
 
 fn inflating_benchmark(c: &mut Criterion) {
-    let input_string = black_box("(27x12)(20x12)(13x14)(7x10)(1x12)A");
+    let input_string = black_box("(25x3)(3x3)ABC(2x3)XY(5x2)PQRSTX(18x9)(3x2)TWO(5x7)SEVEN");
 
     c.bench_function("inflating_benchmark", |bencher| {
         bencher.iter(|| {
