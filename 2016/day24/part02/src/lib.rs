@@ -12,7 +12,10 @@ pub fn gen_map(file_contents: String) -> Vec<Vec<Node>> {
         for (x, character) in line.chars().into_iter().enumerate() {
             map_line.push(Node {
                 node_type: character.into(),
-                position: Vector { x, y },
+                position: Vector {
+                    x: x as isize,
+                    y: y as isize,
+                },
             });
         }
         map.push(map_line);
@@ -118,16 +121,29 @@ fn get_non_zero_nodes(input_map: &Vec<Vec<Node>>) -> Vec<&Node> {
 
 #[inline]
 fn get_neighbors<'a>(node: &Node, map: &'a Vec<Vec<Node>>) -> Vec<&'a Node> {
-    map.iter()
-        .flatten()
-        .filter(|n| {
-            n.node_type != NodeType::Wall
-                && ((n.position.x == node.position.x + 1 && n.position.y == node.position.y)
-                    || (n.position.x == node.position.x - 1 && n.position.y == node.position.y)
-                    || (n.position.x == node.position.x && n.position.y == node.position.y + 1)
-                    || (n.position.x == node.position.x && n.position.y == node.position.y - 1))
-        })
-        .collect()
+    [
+        Vector { x: 1, y: 0 },
+        Vector { x: -1, y: 0 },
+        Vector { x: 0, y: 1 },
+        Vector { x: 0, y: -1 },
+    ]
+    .into_iter()
+    .map(|v| {
+        if let Some(y) = map.get((node.position.y + v.y) as usize) {
+            y.get((node.position.x + v.x) as usize)
+        } else {
+            None
+        }
+    })
+    .filter(|O| {
+        if let Some(O) = O {
+            O.node_type != NodeType::Wall
+        } else {
+            false
+        }
+    })
+    .map(|x| x.unwrap())
+    .collect()
 }
 
 #[cfg(test)]

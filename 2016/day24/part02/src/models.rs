@@ -33,8 +33,8 @@ impl Into<char> for NodeType {
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub struct Vector {
-    pub x: usize,
-    pub y: usize,
+    pub x: isize,
+    pub y: isize,
 }
 
 impl Display for Vector {
@@ -76,7 +76,7 @@ pub fn get_map_string_marked(map: &Vec<Vec<Node>>, path: &Path) -> String {
             if path
                 .traveled
                 .iter()
-                .find(|node| node.position.x == x && node.position.y == y)
+                .find(|node| node.position.x == x as isize && node.position.y == y as isize)
                 .is_some()
             {
                 map_string.push('⬤');
