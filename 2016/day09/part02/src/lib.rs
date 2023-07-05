@@ -104,9 +104,10 @@ impl EasterBunnyInflator {
                 let end_token_position = self
                     .reference_chars
                     .iter()
-                    .enumerate()
-                    .position(|(i, x)| i > self.pos && x == &')')
-                    .unwrap();
+                    .skip(self.pos)
+                    .position(|x| x == &')')
+                    .unwrap()
+                    + self.pos;
 
                 let token_str = String::from_iter(
                     self.reference_chars[self.pos..end_token_position].into_iter(),

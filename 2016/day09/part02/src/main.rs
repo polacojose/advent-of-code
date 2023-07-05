@@ -9,6 +9,7 @@ fn main() {
 
         let mut inflator = EasterBunnyRecursiveInflator::new(line);
         let mut size: usize = 0;
+
         while let Some(decoded_chars) = inflator.next() {
             size += decoded_chars.len();
             if size % 100000 == 0 {
