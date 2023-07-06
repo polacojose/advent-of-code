@@ -1,0 +1,26 @@
+struct GroupScoreStringCounter<'a> {
+    reference_string: &'a str,
+    score: usize,
+    pos: usize,
+    depth: usize,
+    state: GroupScoreStringCounterState,
+}
+
+enum GroupScoreStringCounterState {
+    Init,
+    GroupCollect,
+    GroupCount,
+    GarbageSkip,
+}
+
+impl<'a> GroupScoreStringCounter<'a> {
+    fn new(reference_string: &'a str, base_score: usize) -> Self {
+        Self {
+            reference_string,
+            score: base_score,
+            pos: 0,
+            depth: 0,
+            state: GroupScoreStringCounterState::Init,
+        }
+    }
+}
