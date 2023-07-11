@@ -1,14 +1,12 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"sort"
 )
 
 func main() {
 	//fmt.Println(HAPPINESS_MAP)
-	result, _ := find_seating()
+	result := find_seating()
 	fmt.Println(result, "=", getSeatingHappiness(result))
 }
 
@@ -17,7 +15,7 @@ type Seating struct {
 	happiness int
 }
 
-func find_seating() ([]string, error) {
+func find_seating() []string {
 
 	openSet := []Seating{}
 	openSet = append(openSet, Seating{
@@ -25,12 +23,18 @@ func find_seating() ([]string, error) {
 		happiness: 0,
 	})
 
+	maxHappiness := 0
+	var maxHappinessPath Seating
+
 	for len(openSet) > 0 {
 		currentSeating := openSet[0]
 		openSet = openSet[1:]
 
 		if len(currentSeating.segments) > len(HAPPINESS_MAP) {
-			return currentSeating.segments, nil
+			if currentSeating.happiness > maxHappiness {
+				maxHappiness = currentSeating.happiness
+				maxHappinessPath = currentSeating
+			}
 		}
 
 		if len(currentSeating.segments) == len(HAPPINESS_MAP) {
@@ -63,20 +67,8 @@ func find_seating() ([]string, error) {
 				openSet = append(openSet, newSeating)
 			}
 		}
-
-		sort.Slice(openSet, func(i, j int) bool {
-			seating_a := openSet[i]
-			seating_b := openSet[j]
-
-			if len(openSet[i].segments) == len(openSet[j].segments) {
-				return seating_a.happiness > seating_b.happiness
-			}
-
-			return len(openSet[i].segments) < len(openSet[j].segments)
-		})
 	}
-
-	return nil, errors.New("Max happiness seating not found")
+	return maxHappinessPath.segments
 }
 
 func getSeatingHappiness(seating []string) int {
