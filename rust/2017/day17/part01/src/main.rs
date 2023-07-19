@@ -1,26 +1,46 @@
-pub mod lib;
-use crate::lib::get_instructions;
-
-const INPUT: &str = "abcdefghijklmnop";
-
 fn main() {
-    let instructions = get_instructions();
+    //part1();
+    part2();
+}
 
-    let mut start = INPUT.to_string().chars().collect::<Vec<_>>();
-    for i in &instructions {
-        i.execute(&mut start);
+fn part1() {
+    let step_size: usize = 303;
+    let mut spin_lock: Vec<usize> = vec![0];
+    let mut location: usize = 0;
+
+    for i in 1..=2017 {
+        location = ((location + step_size) % spin_lock.len()) + 1;
+        spin_lock.insert(location, i);
     }
+    println!("Part01 after {:?}", spin_lock.get(location + 1));
+}
 
-    println!("{:?}", start);
+fn part2() {
+    let step_size: usize = 303;
+    let mut spin_lock_len = 1;
+    let mut location: usize = 0;
 
-    for i in 0..(1000000000 - 1) % 60 {
-        if i % 60 == 0 {
-            println!("{:?}", start);
-        }
-        for i in &instructions {
-            i.execute(&mut start);
+    for i in 1..=50000000 {
+        location = ((location + step_size) % spin_lock_len) + 1;
+        spin_lock_len += 1;
+        if location == 1 {
+            println!("{}", i);
         }
     }
+}
 
-    println!("{:?}", start.into_iter().collect::<String>());
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test() {
+        const step_size: usize = 3;
+        let mut spin_lock: Vec<usize> = vec![0];
+        let mut location: usize = 0;
+
+        for i in 1..=2017 {
+            location = ((location + step_size) % spin_lock.len()) + 1;
+            spin_lock.insert(location, i);
+        }
+        println!("After {:?}", spin_lock.get(location + 1));
+    }
 }

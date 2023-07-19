@@ -3,13 +3,6 @@ name = "part01"
 version = "0.1.0"
 edition = "2021"
 
-[lib]
-name = "part01"
-path = "src/lib.rs"
-
-[[bin]]
-name = "part01"
-path = "src/main.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
