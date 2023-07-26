@@ -3,6 +3,21 @@ name = "part01"
 version = "0.1.0"
 edition = "2021"
 
+[profile.release]
+lto = true
+codegen-units = 1
+
+[profile.bench]
+lto = true
+debug = true
+codegen-units = 1
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+criterion = "0.5.1"
+
+[[bench]]
+name = "light_benchmark"
+harness = false
+
