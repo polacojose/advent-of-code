@@ -71,8 +71,6 @@ func getRegister(r string) int {
 	if val, ok := REGISTERS[r]; ok {
 		return val
 	}
-
-	REGISTERS[r] = 0
 	return 0
 }
 
