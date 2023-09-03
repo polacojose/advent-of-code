@@ -8,7 +8,10 @@ import (
 )
 
 func main() {
+	fmt.Println("3 Groupings")
 	optimumGroup(3)
+	fmt.Println()
+	fmt.Println("4 Groupings")
 	optimumGroup(4)
 }
 
