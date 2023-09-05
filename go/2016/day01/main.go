@@ -19,10 +19,8 @@ const (
 )
 
 func main() {
-
 	instructions := getInstructions()
 	execute(instructions)
-
 }
 
 type Vector struct {
@@ -37,9 +35,10 @@ func execute(instructions []string) {
 		y       = 0
 	)
 
-	locations := []Vector{Vector{0, 0}}
+	locations := []Vector{{0, 0}}
 
 	for _, inst := range instructions {
+
 		face := inst[:1]
 		dist, _ := strconv.Atoi(inst[1:])
 
