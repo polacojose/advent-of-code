@@ -1,0 +1,224 @@
+package main
+
+import (
+	"bufio"
+	"errors"
+	"fmt"
+	"log"
+	"os"
+	"strconv"
+	"strings"
+)
+
+type BotInstruction struct {
+	id   int
+	low  Container
+	high Container
+}
+
+type ContainerType int
+
+const (
+	Bot ContainerType = iota
+	Output
+)
+
+type ValueInstruction struct {
+	val       int
+	container Container
+}
+
+type Container struct {
+	id            int
+	containerType ContainerType
+}
+
+type Instructions struct {
+	valInsts []ValueInstruction
+	botInsts map[int]BotInstruction
+}
+
+func main() {
+
+	insts, err := getInstructions()
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	botVals := map[int][]int{}
+	outputVals := map[int]int{}
+
+	for _, inst := range insts.valInsts {
+		switch inst.container.containerType {
+		case Bot:
+			vs := botVals[inst.container.id]
+			vs = append(vs, inst.val)
+			botVals[inst.container.id] = vs
+		case Output:
+			outputVals[inst.container.id] = inst.val
+		default:
+			log.Fatal(errors.New("Unknown Container Type"))
+			return
+		}
+	}
+
+	workingBots := []int{}
+	for id, botVal := range botVals {
+		if len(botVal) >= 2 {
+			workingBots = append(workingBots, id)
+		}
+	}
+
+	for len(workingBots) > 0 {
+		id := workingBots[0]
+		workingBots = workingBots[1:]
+		inst := insts.botInsts[id]
+
+		bot := botVals[id]
+		lowVal := bot[0]
+		highVal := bot[1]
+		if bot[1] < bot[0] {
+			lowVal = bot[1]
+			highVal = bot[0]
+		}
+		botVals[id] = botVals[id][:0]
+
+		if highVal == 61 && lowVal == 17 {
+			fmt.Println("Responsible Bot:", id)
+		}
+
+		switch inst.low.containerType {
+		case Bot:
+			v := botVals[inst.low.id]
+			v = append(v, lowVal)
+			botVals[inst.low.id] = v
+
+			if len(v) >= 2 {
+				workingBots = append(workingBots, inst.low.id)
+			}
+
+		case Output:
+			outputVals[inst.low.id] = lowVal
+		}
+
+		switch inst.high.containerType {
+		case Bot:
+			v := botVals[inst.high.id]
+			v = append(v, highVal)
+			botVals[inst.high.id] = v
+
+			if len(v) >= 2 {
+				workingBots = append(workingBots, inst.high.id)
+			}
+
+		case Output:
+			outputVals[inst.high.id] = highVal
+		}
+	}
+
+	fmt.Println("outputs", outputVals)
+	fmt.Println("Output [0 * 1 * 2]:", outputVals[0]*outputVals[1]*outputVals[2])
+}
+
+func getInstructions() (Instructions, error) {
+	f, err := os.Open("input.txt")
+	if err != nil {
+		log.Fatal(err)
+		return Instructions{}, err
+	}
+
+	fileScanner := bufio.NewScanner(f)
+	fileScanner.Split(bufio.ScanLines)
+
+	botInstructions := map[int]BotInstruction{}
+	valueInstructions := []ValueInstruction{}
+	for fileScanner.Scan() {
+		line := fileScanner.Text()
+
+		switch {
+		case strings.Index(line, "value") == 0:
+			inst, err := parseValInst(line)
+			if err != nil {
+				log.Fatal(err)
+				return Instructions{}, nil
+			}
+			valueInstructions = append(valueInstructions, inst)
+		default:
+			inst, err := parseBotInst(line)
+			if err != nil {
+				log.Fatal(err)
+				return Instructions{}, nil
+			}
+			botInstructions[inst.id] = inst
+		}
+	}
+	f.Close()
+	return Instructions{
+		valInsts: valueInstructions,
+		botInsts: botInstructions,
+	}, nil
+}
+
+func parseValInst(s string) (ValueInstruction, error) {
+	parts := strings.Fields(s)
+	a, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return ValueInstruction{}, err
+	}
+
+	b, err := strconv.Atoi(parts[5])
+	if err != nil {
+		return ValueInstruction{}, err
+	}
+	bT := Bot
+	if parts[4] == "output" {
+		bT = Output
+	}
+
+	return ValueInstruction{
+		val: a,
+		container: Container{
+			id:            b,
+			containerType: bT,
+		},
+	}, nil
+}
+
+func parseBotInst(s string) (BotInstruction, error) {
+	parts := strings.Fields(s)
+	a, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return BotInstruction{}, err
+	}
+
+	b, err := strconv.Atoi(parts[6])
+	if err != nil {
+		return BotInstruction{}, err
+	}
+	bT := Bot
+	if parts[5] == "output" {
+		bT = Output
+	}
+
+	c, err := strconv.Atoi(parts[11])
+	if err != nil {
+		return BotInstruction{}, err
+	}
+	cT := Bot
+	if parts[10] == "output" {
+		cT = Output
+	}
+
+	return BotInstruction{
+		id: a,
+		low: Container{
+			id:            b,
+			containerType: bT,
+		},
+		high: Container{
+			id:            c,
+			containerType: cT,
+		},
+	}, nil
+}
