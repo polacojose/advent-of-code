@@ -34,7 +34,6 @@ func main() {
 				fmt.Println(err)
 				return
 			}
-
 			totalBytes += read
 
 			if totalBytes%1000000 == 0 {
@@ -51,7 +50,6 @@ func main() {
 			if read == 0 {
 				break
 			}
-
 		}
 		fmt.Println()
 		fmt.Println(totalBytes)

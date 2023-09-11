@@ -50,10 +50,12 @@ fn main() {
     for (name, _) in GUESTS.iter() {
         let length = find_paths(name.to_string(), vec![name.to_string()], 0);
         println!("{}: {}", name, length.unwrap().1);
+        return;
     }
 }
 
 fn find_paths(name_a: String, seated: Vec<String>, happiness: i32) -> Option<(Vec<String>, i32)> {
+    println!("comparison");
     let relationships = GUESTS.get(&name_a).unwrap().relationships.clone();
 
     let mut max_relationship_seating_arrangment = Vec::new();
@@ -72,7 +74,7 @@ fn find_paths(name_a: String, seated: Vec<String>, happiness: i32) -> Option<(Ve
                 .unwrap()
                 .happiness;
 
-            let mut combined_happiness = happiness + relationship.happiness + receieved_happiness;
+            let combined_happiness = happiness + relationship.happiness + receieved_happiness;
 
             if seated.len() == GUESTS.keys().len() {
                 // Get first and last seated

@@ -19,6 +19,7 @@ type Device struct {
 	name  string
 	_type DeviceType
 	floor int
+	id    int
 }
 
 type BuildingState struct {
@@ -187,7 +188,7 @@ func validateBuildingState(b BuildingState) bool {
 
 func printBuildingState(b BuildingState) {
 
-	horzIndex := 0
+	//	horzIndex := 0
 	for i := b.maxFloor; i >= 0; i-- {
 		fmt.Printf("F%d ", i+1)
 
@@ -198,16 +199,20 @@ func printBuildingState(b BuildingState) {
 		}
 
 		floorIndex := 0
-		for floorIndex < horzIndex {
-			fmt.Print("  .  ")
-			floorIndex++
-		}
+		//	for floorIndex < horzIndex {
+		//		fmt.Print("  .  ")
+		//		floorIndex++
+		//	}
 
 		for _, d := range b.devices {
 			if d.floor == i {
+				for floorIndex < d.id {
+					fmt.Print("  .  ")
+					floorIndex++
+				}
 				fmt.Printf("%s-%s ", d.name, d._type)
 				floorIndex++
-				horzIndex++
+				//				horzIndex++
 			}
 		}
 
@@ -233,6 +238,7 @@ func getInitialBuildingState(s string) (BuildingState, error) {
 
 	devices := []Device{}
 	floorIndex := -1
+	id := 0
 	for fileScanner.Scan() {
 		floorIndex++
 		line := fileScanner.Text()
@@ -255,9 +261,11 @@ func getInitialBuildingState(s string) (BuildingState, error) {
 
 			devices = append(devices, Device{
 				name:  strings.ToUpper(string(deviceParts[0][0:2])),
-				floor: floorIndex,
 				_type: deviceType,
+				floor: floorIndex,
+				id:    id,
 			})
+			id++
 		}
 	}
 

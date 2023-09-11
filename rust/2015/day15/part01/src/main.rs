@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{hash_map, HashMap, HashSet},
     fs,
 };
 
@@ -40,21 +40,7 @@ lazy_static! {
 }
 
 fn main() {
-    let mut largest_score = 0;
-    let mut best_ingredients = HashMap::new();
-
-    let first_ingredient_name = INGREDIENTS.keys().next().unwrap().clone();
-    for amount in 0..MAX_COOKIE_CAPACITY {
-        let mut used_ingredients = HashMap::new();
-        used_ingredients.insert(first_ingredient_name.clone(), amount as i32);
-        let (score, used_ingredients) = get_max_cookie(amount as u32, used_ingredients);
-
-        if score > largest_score {
-            largest_score = score;
-            best_ingredients = used_ingredients;
-        }
-    }
-
+    let (largest_score, best_ingredients) = get_max_cookie(0, Default::default());
     println!("Largest score: {}", largest_score);
     println!("Best ingredients: {:?}", best_ingredients);
 }
@@ -122,11 +108,18 @@ fn get_max_cookie(
         .next()
         .unwrap();
 
-    for amount in 1..=(MAX_COOKIE_CAPACITY - amounts_used as usize) {
+    let minimum = if used_ingredients.len() == (INGREDIENTS.keys().len() - 1) {
+        MAX_COOKIE_CAPACITY - amounts_used as usize
+    } else {
+        1
+    };
+
+    for amount in minimum..=(MAX_COOKIE_CAPACITY - amounts_used as usize) {
         let mut used_ingredients = used_ingredients.clone();
         used_ingredients.insert(next_ingredient_name.clone(), amount as i32);
         let (score, used_ingredients) =
             get_max_cookie(amounts_used + amount as u32, used_ingredients.clone());
+        //println!("{:?}", used_ingredients);
         if score > max_score {
             max_score = score;
             max_used_ingredients = used_ingredients.clone();

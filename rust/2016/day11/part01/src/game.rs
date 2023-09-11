@@ -8,7 +8,7 @@ const FLOOR_HEIGHT: usize = 4;
 
 lazy_static! {
     pub static ref INITIAL_GAME_STATE: GameState = {
-        let file_string = fs::read_to_string("input.txt").unwrap();
+        let file_string = fs::read_to_string("demo-input.txt").unwrap();
         let re = Regex::new(r"(x?) a (?P<name>[a-z-]+) (?P<device_type>\w+)").unwrap();
 
         let mut devices = Vec::new();
