@@ -20,6 +20,40 @@ func main() {
 	astar.PrintPath(path, config)
 	fmt.Println("Steps:", len(path)-1)
 	fmt.Println("Nodes:", path)
+
+	const nearSteps = 50
+	nearNodes := map[astar.Vector]bool{
+		{X: 1, Y: 1}: true,
+	}
+	usedNodes := map[astar.Vector]bool{}
+	for y := nearSteps; y >= 0; y-- {
+		for x := nearSteps; x >= 0; x-- {
+			node := astar.Vector{X: x, Y: y}
+
+			if _, ok := usedNodes[node]; ok {
+				continue
+			}
+
+			usedNodes[node] = true
+
+			path, err := astar.FindPath(astar.Vector{X: 1, Y: 1}, node, config)
+			if err != nil {
+				continue
+			}
+			path = path[1:]
+
+			if len(path) > nearSteps {
+				path = path[:nearSteps]
+			}
+
+			for _, n := range path {
+				nearNodes[n] = true
+				usedNodes[n] = true
+			}
+		}
+	}
+
+	fmt.Printf("Nodes within %d steps: %d\n", nearSteps, len(nearNodes))
 }
 
 type ASConfig struct{}

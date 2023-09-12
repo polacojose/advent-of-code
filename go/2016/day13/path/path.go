@@ -120,11 +120,11 @@ func PrintPath(p []Vector, config AStarConfig) {
 					}
 
 					if p[len(p)-1] == current {
-						fmt.Printf("%3s", "◎")
+						fmt.Printf("%3s", "❌")
 						continue
 					}
 
-					fmt.Printf("%3s", ".")
+					fmt.Printf("%3s", "•")
 				} else {
 					fmt.Printf("%3s", "")
 				}
