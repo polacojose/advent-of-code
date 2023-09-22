@@ -69,6 +69,7 @@ func stretched() {
 		if isKey(i, triple, getStretchedHash) {
 			indexes = append(indexes, i)
 			keys = append(keys, hash)
+			fmt.Println(len(keys), i)
 			continue
 		}
 
