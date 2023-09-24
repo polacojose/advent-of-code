@@ -8,7 +8,12 @@ set c b
 sub c -17000
 set f 1
 set d 2
+
+#loop A_Start
 set e 2
+
+#loop B_START
+
 set g d
 mul g e
 sub g b
@@ -18,10 +23,16 @@ sub e -1
 set g e
 sub g b
 jnz g -8
+
+#loop B_END
+
 sub d -1
 set g d
 sub g b
 jnz g -13
+
+#loop B_END
+
 jnz f 2
 sub h -1
 set g b

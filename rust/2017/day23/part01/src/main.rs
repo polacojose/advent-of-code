@@ -1,4 +1,4 @@
-use std::{borrow::BorrowMut, collections::HashMap, fs, str::FromStr, sync::RwLock};
+use std::{collections::HashMap, fs, str::FromStr, sync::RwLock};
 
 use lazy_static::lazy_static;
 
@@ -19,6 +19,10 @@ impl FromStr for Instruction {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let parts = s.split_whitespace().collect::<Vec<_>>();
 
+        if parts.len() < 3 {
+            return Err(UnableToParse);
+        }
+
         let x = parts[1].to_owned();
         let y = parts[2].to_owned();
 
@@ -37,19 +41,19 @@ impl Instruction {
         match self {
             Instruction::set { x, y } => {
                 let val = get_value(y);
-                set_register(x, val);
+                set_reg(x, val);
                 offset_ip(1);
             }
             Instruction::sub { x, y } => {
                 let val = get_value(y);
-                let reg_val = get_register(x);
-                set_register(x, reg_val - val);
+                let reg_val = get_reg(x);
+                set_reg(x, reg_val - val);
                 offset_ip(1);
             }
             Instruction::mul { x, y } => {
                 let val = get_value(y);
-                let reg_val = get_register(x);
-                set_register(x, reg_val * val);
+                let reg_val = get_reg(x);
+                set_reg(x, reg_val * val);
                 offset_ip(1);
             }
             Instruction::jnz { x, y } => {
@@ -67,7 +71,7 @@ lazy_static! {
     static ref REGISTER: RwLock<HashMap<String, isize>> = Default::default();
 }
 
-fn get_register(r: impl AsRef<str>) -> isize {
+fn get_reg(r: impl AsRef<str>) -> isize {
     if let Some(val) = REGISTER.read().unwrap().get(r.as_ref()) {
         return *val;
     }
@@ -76,7 +80,7 @@ fn get_register(r: impl AsRef<str>) -> isize {
     return 0;
 }
 
-fn set_register(r: impl AsRef<str>, val: isize) {
+fn set_reg(r: impl AsRef<str>, val: isize) {
     REGISTER.write().unwrap().insert(r.as_ref().to_owned(), val);
 }
 
@@ -85,19 +89,21 @@ fn get_value(r: impl AsRef<str>) -> isize {
         return val;
     }
 
-    get_register(r)
+    get_reg(r)
 }
 
 fn offset_ip(offset: isize) {
-    let val = get_register("ip");
-    set_register("ip", val + offset);
+    let val = get_reg("ip");
+    set_reg("ip", val + offset);
 }
 
 fn main() {
     let instructions = fs::read_to_string("input.txt")
         .unwrap()
         .lines()
-        .map(|x| x.parse::<Instruction>().unwrap())
+        .map(|x| x.parse::<Instruction>())
+        .filter(|x| x.is_ok())
+        .map(|x| x.unwrap())
         .collect::<Vec<_>>();
 
     //part1(&instructions);
@@ -106,7 +112,7 @@ fn main() {
 
 fn part1(instructions: &Vec<Instruction>) {
     let mut mul_count = 0;
-    while let Some(instruction) = instructions.get(get_register("ip") as usize) {
+    while let Some(instruction) = instructions.get(get_reg("ip") as usize) {
         instruction.execute();
 
         match instruction {
@@ -119,12 +125,59 @@ fn part1(instructions: &Vec<Instruction>) {
 }
 
 fn part2(instructions: &Vec<Instruction>) {
-    set_register("a", 1);
-    while let Some(instruction) = instructions.get(get_register("ip") as usize) {
+    set_reg("a", 1);
+    while let Some(instruction) = instructions.get(get_reg("ip") as usize) {
+        println!("{:?}", *REGISTER.read().unwrap());
+        match instruction {
+            Instruction::jnz { x, y: _ } => {
+                if x == "g" && get_reg("g") != 0 {
+                    if get_reg("ip") == 19 {
+                        set_reg("g", 0);
+                        set_reg("e", get_reg("b"));
+                    } else if get_reg("ip") == 23 {
+                        set_reg("g", 0);
+                        set_reg("d", get_reg("b"));
+
+                        let mut f = 1;
+                        let b = get_reg("b");
+                        for d in 2..b {
+                            if b % d == 0 {
+                                f = 0;
+                                break;
+                            }
+                        }
+                        set_reg("f", f);
+                    }
+                }
+            }
+            _ => {}
+        }
+
+        println!("{}: {:?}", get_reg("ip"), instruction);
         instruction.execute();
-        println!("{:?}", instruction);
         println!("{:?}", *REGISTER.read().unwrap());
         println!();
     }
     println!("{:?}", *REGISTER.read().unwrap());
+}
+
+fn pseudo() {
+    let b = 123;
+    let mut d = 2;
+    let mut f = 1;
+
+    while d < b {
+        let mut e = 2;
+        while e < b {
+            if d * e == b {
+                f = 0;
+            }
+            e += 1;
+
+            if e == b {
+                break;
+            }
+        }
+        d += 1;
+    }
 }
