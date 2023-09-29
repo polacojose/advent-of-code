@@ -1,0 +1,87 @@
+import Bitwise
+
+defmodule AdventOfCode.Year2015.Day07.Part1 do
+  @input "demo-input.txt"
+
+  def parse() do
+    File.stream!(@input)
+    |> Enum.map(&String.trim/1)
+    |> Enum.map(&String.split/1)
+    |> Enum.map(&parse_instruction/1)
+  end
+
+  def parse_instruction([a, "->", r]), do: to_inst(:assign, [a], r)
+  def parse_instruction(["NOT", a, "->", r]), do: to_inst(:not, a, r)
+  def parse_instruction([a, "AND", b, "->", r]), do: to_inst(:and, a, b, r)
+  def parse_instruction([a, "OR", b, "->", r]), do: to_inst(:or, a, b, r)
+  def parse_instruction([a, "LSHIFT", b, "->", r]), do: to_inst(:lshift, a, b, r)
+  def parse_instruction([a, "RSHIFT", b, "->", r]), do: to_inst(:rshift, a, b, r)
+
+  def get_val(a, map) do
+    val = Integer.parse(a)
+
+    case val do
+      :error -> Map.get(map, a, 0)
+      {v, _} -> v
+    end
+  end
+
+  def
+
+  def to_assign(a, r) do
+    fn map ->
+      a = get_val(a, map)
+      Map.put(map, r, a)
+    end
+  end
+
+  def to_not(a, r) do
+    fn map ->
+      a = get_val(a, map)
+      Map.put(map, r, 65535 - a)
+    end
+  end
+
+  def to_and(a, b, r) do
+    fn map ->
+      a = get_val(a, map)
+      b = get_val(b, map)
+      Map.put(map, r, band(a, b))
+    end
+  end
+
+  def to_or(a, b, r) do
+    fn map ->
+      a = get_val(a, map)
+      b = get_val(b, map)
+      Map.put(map, r, bor(a, b))
+    end
+  end
+
+  def to_lshift(a, b, r) do
+    fn map ->
+      a = get_val(a, map)
+      b = get_val(b, map)
+      Map.put(map, r, bsl(a, b))
+    end
+  end
+
+  def to_rshift(a, b, r) do
+    fn map ->
+      a = get_val(a, map)
+      b = get_val(b, map)
+      Map.put(map, r, bsr(a, b))
+    end
+  end
+end
+
+result =
+  AdventOfCode.Year2015.Day07.Part1.parse()
+  |> Enum.reduce(%{}, fn f, acc ->
+    acc = f.(acc)
+    acc
+  end)
+
+# %{"a" => a} = result
+
+IO.inspect(result)
