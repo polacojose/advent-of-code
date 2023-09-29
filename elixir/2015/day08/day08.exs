@@ -1,10 +1,10 @@
-defmodule StringLength do
+defmodule AdventOfCode.Year2015.Day08 do
   @input "input.txt"
 
   def lengths() do
     File.stream!(@input)
     |> Enum.map(&String.trim/1)
-    |> Enum.map(fn x -> {x, Code.eval_string(x), escaped(x)} end)
+    |> Enum.map(fn x -> {x, Code.eval_string(x), escape(x)} end)
     |> Enum.map(fn {org, {str, _}, encoded} ->
       %{
         str: str,
@@ -15,7 +15,7 @@ defmodule StringLength do
     end)
   end
 
-  def escaped(s) do
+  defp escape(s) do
     e =
       String.replace(s, "\\", "\\\\")
       |> String.replace("\"", "\\\"")
@@ -24,10 +24,10 @@ defmodule StringLength do
   end
 end
 
-StringLength.lengths()
+AdventOfCode.Year2015.Day08.lengths()
 |> Enum.reduce(0, fn %{length: l, eval_length: e}, acc -> l - e + acc end)
 |> IO.puts()
 
-StringLength.lengths()
+AdventOfCode.Year2015.Day08.lengths()
 |> Enum.reduce(0, fn %{length: l, encode_length: e}, acc -> e - l + acc end)
 |> IO.puts()
