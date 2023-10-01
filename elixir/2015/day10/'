@@ -1,0 +1,38 @@
+defmodule AOC.Year2015.Day10 do
+  def look_and_say(string) do
+    String.codepoints(string)
+    |> count_chars()
+  end
+
+  def count_chars([h | t]) do
+    count_chars(t, h, 1, "")
+  end
+
+  def count_chars([h], l, num, acc) do
+    case h do
+      ^l ->
+        acc = acc <> Integer.to_string(num + 1) <> l
+
+      _ ->
+        acc = acc <> Integer.to_string(num) <> l
+        acc = acc <> Integer.to_string(1) <> h
+    end
+  end
+
+  def count_chars([h | t], l, num, acc) do
+    case h do
+      ^l ->
+        count_chars(t, h, num + 1, acc)
+
+      _ ->
+        acc = acc <> Integer.to_string(num) <> l
+        count_chars(t, h, 1, acc)
+    end
+  end
+end
+
+File.stream!("demo-input.txt")
+|> Enum.map(&String.trim/1)
+|> Enum.map(fn x ->
+   AOC.Year2015.Day10.look_and_say(x) |> IO.inspect()
+end)
