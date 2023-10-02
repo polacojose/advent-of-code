@@ -15,27 +15,31 @@ defmodule Day12 do
         Enum.map(o, &getNumbers(&1, option))
 
       is_map(o) ->
-        values = Map.values(o)
-
-        case option do
-          :nonred ->
-            case values |> Enum.find(nil, fn v -> v == "red" end) do
-              nil ->
-                Map.values(o) |> Enum.map(fn x -> getNumbers(x, option) end)
-
-              _ ->
-                0
-            end
-
-          _ ->
-            Map.values(o) |> Enum.map(fn x -> getNumbers(x, option) end)
-        end
+        getMapNumbers(o, option)
 
       is_number(o) ->
         o
 
       true ->
         0
+    end
+  end
+
+  def getMapNumbers(o, option) do
+    values = Map.values(o)
+
+    case option do
+      :nonred ->
+        case values |> Enum.find(nil, fn v -> v == "red" end) do
+          nil ->
+            Map.values(o) |> Enum.map(fn x -> getNumbers(x, option) end)
+
+          _ ->
+            0
+        end
+
+      _ ->
+        Map.values(o) |> Enum.map(fn x -> getNumbers(x, option) end)
     end
   end
 end
