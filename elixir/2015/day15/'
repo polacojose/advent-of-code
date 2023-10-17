@@ -1,0 +1,65 @@
+defmodule Ingredient do
+  defstruct name: "", capacity: 0, durability: 0, flavor: 0, texture: 0, calories: 0
+end
+
+defmodule Measurment do
+  defstruct ingredient: %Ingredient{}, amount: 0
+end
+
+defmodule Day15 do
+  @spec parse_ingredients(String.t()) :: list(Ingredient.t())
+  def parse_ingredients(file) do
+    File.stream!(file)
+    |> Stream.map(&String.trim/1)
+    |> Stream.map(&parse_ingredient/1)
+    |> Enum.to_list()
+  end
+
+  @spec parse_ingredient(String.t()) :: Ingredient.t()
+  def parse_ingredient(line) do
+    name = Regex.run(~r/(\w+):/, line, capture: :all_but_first) |> hd
+
+    Regex.scan(~r/(\w+) ([-\d]+)/, line, capture: :all_but_first)
+    |> Enum.reduce(%Ingredient{name: name}, fn [k, v], acc ->
+      Map.put(acc, String.to_atom(k), String.to_integer(v))
+    end)
+  end
+
+  @spec score_cookie(list(Measurment.t())) :: integer
+  def score_cookie(measurements) do
+    Enum.map(
+      measurements,
+      fn %Measurment{
+           ingredient: %Ingredient{
+             capacity: c,
+             durability: d,
+             flavor: f,
+             texture: t
+           },
+           amount: a
+         } ->
+        [c * a, d * a, f * a, t * a]
+      end
+    )
+    |> Enum.zip()
+    |> Enum.reduce(1, fn {a, b}, acc -> acc * max(a + b, 0) end)
+  end
+
+  def number_combos(n, acc \\ [])
+
+  def number_combos(1, acc) do
+    [100 - Enum.sum(acc) | acc]
+  end
+
+  def number_combos(n, acc) do
+    Enum.map(1..(100 - Enum.sum(acc) - n), fn x ->
+      number_combos(n - 1, [x | acc])
+    end)
+  end
+
+  def flatten_to_list([head | tail]) when is_list(head) and not is_list(head |> hd) do
+    head ++ flatten_to_list(tail)
+  end
+
+  def flatten_to_list(l), do: l
+end
