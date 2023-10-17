@@ -30,14 +30,14 @@ defmodule Day16 do
     File.stream!(@input_file)
     |> Stream.map(&Aunt.parse/1)
     |> Stream.filter(&part1_comparison(&1, @match))
-    |> Enum.to_list()
+    |> Enum.at(0)
   end
 
   def part2_which_aunt?() do
     File.stream!(@input_file)
     |> Stream.map(&Aunt.parse/1)
     |> Stream.filter(&part2_comparison(&1, @match))
-    |> Enum.to_list()
+    |> Enum.at(0)
   end
 
   @spec part1_comparison(Map.t(), Map.t()) :: boolean
