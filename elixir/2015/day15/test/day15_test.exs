@@ -41,4 +41,23 @@ defmodule Day15Test do
              }
            ]) == 62_842_880
   end
+
+  test "Sum calories" do
+    assert Day15.cookie_calories([
+             %Measurment{
+               ingredient: %Ingredient{
+                 name: "Butterscotch",
+                 calories: 8
+               },
+               amount: 44
+             },
+             %Measurment{
+               ingredient: %Ingredient{
+                 name: "Cinnamon",
+                 calories: 3
+               },
+               amount: 56
+             }
+           ]) == 520
+  end
 end

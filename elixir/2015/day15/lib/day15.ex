@@ -46,7 +46,7 @@ defmodule Day15 do
     |> Enum.reduce(1, fn l, acc -> acc * max(Enum.sum(l), 0) end)
   end
 
-  def best_cookie_score(file) do
+  def best_cookie_score(file, filter \\ []) do
     ingredients = parse_ingredients(file)
     combos = ingredient_combos(length(ingredients))
 
@@ -56,9 +56,24 @@ defmodule Day15 do
       |> Enum.map(fn {amount, ingredient} ->
         %Measurment{ingredient: ingredient, amount: amount}
       end)
-      |> score_cookie()
     end)
+    |> Enum.filter(
+      if :calorie_filter in filter do
+        &(cookie_calories(&1) == 500)
+      else
+        &Function.identity/1
+      end
+    )
+    |> Enum.map(&score_cookie/1)
     |> Enum.max()
+  end
+
+  def cookie_calories(measurements) do
+    Enum.map(
+      measurements,
+      &(&1.ingredient.calories * &1.amount)
+    )
+    |> Enum.reduce(0, &(&2 + max(&1, 0)))
   end
 
   def ingredient_combos(n, target \\ 100, acc \\ [])
