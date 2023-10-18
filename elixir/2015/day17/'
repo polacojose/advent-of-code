@@ -1,0 +1,59 @@
+defmodule Day17 do
+  def containers() do
+    "input.txt"
+    |> File.read!()
+    |> String.split("\n", trim: true)
+    |> Enum.map(&String.to_integer/1)
+    |> Enum.with_index()
+  end
+
+  def container_combinations(target) do
+    containers =
+      containers()
+      |> Enum.sort()
+      |> Enum.reverse()
+
+    Enum.map(tails(containers), fn c ->
+      Task.async(fn -> do_container_combinations(c, target) end)
+    end)
+    |> Enum.map(&Task.await(&1, :infinity))
+    |> List.flatten()
+    |> Enum.map(&Tuple.to_list/1)
+    |> Enum.map(&Enum.sort_by(&1, fn x -> elem(x, 1) end))
+    |> Enum.uniq()
+    |> Enum.count()
+  end
+
+  def tails(list, acc \\ [])
+  def tails([], acc), do: acc
+
+  def tails([head | tail], acc) do
+    tails(tail, [[head | tail] | acc])
+  end
+
+  def do_container_combinations(containers, target, working_containers \\ [], acc \\ [])
+  def do_container_combinations([], _, _, acc), do: acc
+
+  def do_container_combinations([head | tail], target, working_containers, acc) do
+    working_containers = [head | working_containers]
+    working_containers_sum = working_containers |> Enum.map(&elem(&1, 0)) |> Enum.sum()
+
+    cond do
+      working_containers_sum == target ->
+        [working_containers |> List.to_tuple() | acc]
+
+      working_containers_sum < target ->
+        for c <- tail do
+          do_container_combinations(
+            [c | List.delete(tail, c)],
+            target,
+            working_containers,
+            acc
+          )
+        end
+
+      true ->
+        acc
+    end
+  end
+end
