@@ -1,4 +1,4 @@
-defmodule AdventOfCode.Year2016.Day06.Part01 do
+defmodule AdventOfCode.Year2015.Day06.Part01 do
   @input "input.txt"
 
   def parse() do
@@ -59,7 +59,7 @@ defmodule AdventOfCode.Year2016.Day06.Part01 do
   end
 end
 
-defmodule AdventOfCode.Year2016.Day06.Part02 do
+defmodule AdventOfCode.Year2015.Day06.Part02 do
   @input "input.txt"
 
   def parse() do
@@ -122,6 +122,6 @@ defmodule AdventOfCode.Year2016.Day06.Part02 do
 end
 
 IO.puts("Part01")
-AdventOfCode.Year2016.Day06.Part01.how_many_lights_light?() |> IO.puts()
+AdventOfCode.Year2015.Day06.Part01.how_many_lights_light?() |> IO.puts()
 IO.puts("Part02")
-AdventOfCode.Year2016.Day06.Part02.how_many_lights_light?() |> IO.puts()
+AdventOfCode.Year2015.Day06.Part02.how_many_lights_light?() |> IO.puts()
