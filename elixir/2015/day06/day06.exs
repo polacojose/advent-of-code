@@ -10,6 +10,8 @@ defmodule AdventOfCode.Year2015.Day06.Part01 do
 
   def how_many_lights_light?() do
     Enum.reduce(parse(), init_grid(false), fn instruction, grid ->
+      IO.inspect(instruction)
+
       case instruction do
         {:turn_on, s, e} -> gen_coordinates(s, e) |> turn_on(grid)
         {:turn_off, s, e} -> gen_coordinates(s, e) |> turn_off(grid)
@@ -121,7 +123,7 @@ defmodule AdventOfCode.Year2015.Day06.Part02 do
   end
 end
 
-IO.puts("Part01")
-AdventOfCode.Year2015.Day06.Part01.how_many_lights_light?() |> IO.puts()
-IO.puts("Part02")
-AdventOfCode.Year2015.Day06.Part02.how_many_lights_light?() |> IO.puts()
+# IO.puts("Part01")
+# AdventOfCode.Year2015.Day06.Part01.how_many_lights_light?() |> IO.puts()
+# IO.puts("Part02")
+# AdventOfCode.Year2015.Day06.Part02.how_many_lights_light?() |> IO.puts()
