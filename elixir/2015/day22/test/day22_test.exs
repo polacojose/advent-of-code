@@ -31,31 +31,26 @@ defmodule Day22Test do
   # end
 
   test "Part 1" do
-    spells =
-      [
-        :magic_missle,
-        :poison,
-        :recharge,
-        :magic_missle,
-        :shield,
-        :poison,
-        :magic_missle,
-        :magic_missle,
-        :magic_missle
-      ]
-
-    spells =
-      Enum.flat_map(spells, fn t ->
-        for %{type: ^t} = s <- Spell.spells(), do: s
-      end)
+    spells = [
+      %Spell{type: :shield, mana: 113, turns: 6},
+      %Spell{type: :recharge, mana: 229, turns: 5},
+      %Spell{type: :poison, mana: 173, turns: 6},
+      %Spell{type: :magic_missle, mana: 53, turns: 0},
+      %Spell{type: :magic_missle, mana: 53, turns: 0},
+      %Spell{type: :poison, mana: 173, turns: 6},
+      %Spell{type: :magic_missle, mana: 53, turns: 0},
+      %Spell{type: :magic_missle, mana: 53, turns: 0},
+      %Spell{type: :magic_missle, mana: 53, turns: 0}
+    ]
 
     IO.inspect(spells)
 
-    player_stats = %PlayerStats{health: 50, mana: 500, spells: spells}
-    boss_stats = %PlayerStats{health: 55, damage: 8}
+    player_stats = %Stats{health: 50, mana: 500, spells: spells}
+    boss_stats = %Stats{health: 55, damage: 8}
 
     battle_state = BattleSim.new_state(player_stats, boss_stats)
 
-    assert(BattleSim.battle(battle_state) == :win)
+    result = BattleSim.battle(battle_state, :hard)
+    assert result != :win
   end
 end

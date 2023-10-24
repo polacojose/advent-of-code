@@ -11,18 +11,4 @@ defmodule Spell do
       %__MODULE__{type: :recharge, mana: 229, turns: 5}
     ]
   end
-
-  @spec spell_lists(pos_integer()) :: [[%__MODULE__{}]]
-  def spell_lists(length) do
-    do_spell_lists(spells()) |> Enum.take(length) |> List.last()
-  end
-
-  defp do_spell_lists(spells) do
-    spells = Enum.map(spells, &[&1])
-
-    Stream.unfold(spells, fn
-      acc ->
-        {acc, for(s <- spells, a <- acc, do: s ++ a)}
-    end)
-  end
 end

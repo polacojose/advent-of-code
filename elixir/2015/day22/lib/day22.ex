@@ -3,47 +3,44 @@ defmodule Day22 do
   Documentation for `Day22`.
   """
 
-  def part1(i \\ 1, {min, last} \\ {1_000_000, nil}) do
-    IO.inspect([i, min, last])
+  def part1() do
+    find_best()
+  end
 
-    spell_lists =
-      Spell.spell_lists(i)
-      |> Enum.map(fn x ->
-        {Enum.reduce(x, 0, fn %Spell{mana: m}, acc -> acc + m end), x}
-      end)
-      |> Enum.filter(fn {c, _} -> c < min end)
+  def part2() do
+    find_best(:hard)
+  end
 
-    if Enum.empty?(spell_lists) do
-      {min, last}
-    else
-      wins =
-        Enum.filter(spell_lists, fn {_, spells} ->
-          player_stats = %PlayerStats{health: 50, mana: 500, spells: spells}
-          boss_stats = %PlayerStats{health: 55, mana: 0, damage: 8}
-          battle_state = BattleSim.new_state(player_stats, boss_stats)
-          BattleSim.battle(battle_state) == :win
-        end)
+  def find_best(mode \\ :normal, spell_list \\ [[]], {c, best} \\ {1_000_000, nil}) do
+    spell_lists = for s <- spell_list, a <- Spell.spells(), do: s ++ [a]
+    spell_lists = Enum.filter(spell_lists, fn spell_list -> list_cost(spell_list) <= c end)
 
-      case length(wins) do
-        0 ->
-          part1(i + 1, {min, last})
+    Enum.reduce(spell_lists, {c, best}, fn spell_list, {cc, bb} ->
+      cost = list_cost(spell_list)
 
-        _ ->
-          last_best =
-            Enum.filter(wins, fn {c, _} -> c < min end)
-            |> Enum.sort_by(fn {c, _} -> c end)
-            |> List.first()
+      if cost do
+        player_stats = %Stats{health: 50, mana: 500, spells: spell_list}
+        boss_stats = %Stats{health: 55, mana: 0, damage: 8}
+        battle_state = BattleSim.new_state(player_stats, boss_stats)
+        result = BattleSim.battle(battle_state, mode)
 
-          case last_best do
-            {c, _} ->
-              if c < min do
-                part1(i + 1, last_best)
-              end
+        case result do
+          :win ->
+            {cost, spell_list}
 
-            _ ->
-              part1(i + 1, {min, last})
-          end
+          :loss_spells ->
+            find_best(mode, [spell_list], {cc, bb})
+
+          _ ->
+            {cc, bb}
+        end
+      else
+        {cc, bb}
       end
-    end
+    end)
+  end
+
+  def list_cost(spell_list) do
+    Enum.reduce(spell_list, 0, fn %Spell{mana: m}, acc -> acc + m end)
   end
 end

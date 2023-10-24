@@ -1,4 +1,4 @@
-defmodule PlayerStats do
+defmodule Stats do
   @moduledoc """
   Defines and parses player stats and loadouts
   """
