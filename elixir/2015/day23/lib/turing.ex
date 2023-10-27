@@ -4,20 +4,25 @@ defmodule Turing do
   @type registers :: %{}
   @valid_registers ["a", "b", "ip"]
 
-  @spec set_register(registers(), String.t(), non_neg_integer()) :: {:ok, registers()} | :error
-  defp set_register(_, reg, _) when reg not in @valid_registers, do: :error
-  defp set_register(_, _, val) when not is_integer(val) or val < 0, do: :error
+  @spec set_register(registers(), String.t(), non_neg_integer()) ::
+          {:ok, registers()} | {:error, String.t()}
+
+  defp set_register(_, reg, _) when reg not in @valid_registers,
+    do: {:error, "invalid register: #{reg}"}
+
+  defp set_register(_, _, val) when not is_integer(val) or val < 0,
+    do: {:error, "value must be a positive integer"}
 
   defp set_register(registers, reg, val) do
     {:ok, Map.put(registers, reg, val)}
   end
 
-  @spec get_register(registers(), String.t()) :: non_neg_integer()
+  @spec get_register(registers(), String.t()) :: number()
   defp get_register(registers, reg) do
     Map.get(registers, reg, 0)
   end
 
-  @spec get_val(registers(), String.t() | integer()) :: non_neg_integer()
+  @spec get_val(registers(), String.t() | integer()) :: number()
   defp get_val(registers, val) do
     result = Integer.parse(val)
 
@@ -56,34 +61,38 @@ defmodule Turing do
   defp execute_instruction(pid, instruction) do
     registers = Agent.get(pid, &Function.identity/1)
 
-    {:ok, registers} =
+    registers =
       case instruction do
         %Instruction{name: "hlf", op1: op1} ->
           val = get_register(registers, op1)
           {:ok, registers} = set_register(registers, op1, div(val, 2))
 
           ip = get_register(registers, "ip")
-          set_register(registers, "ip", ip + 1)
+          {:ok, registers} = set_register(registers, "ip", ip + 1)
+          registers
 
         %Instruction{name: "tpl", op1: op1} ->
           val = get_register(registers, op1)
           {:ok, registers} = set_register(registers, op1, val * 3)
 
           ip = get_register(registers, "ip")
-          set_register(registers, "ip", ip + 1)
+          {:ok, registers} = set_register(registers, "ip", ip + 1)
+          registers
 
         %Instruction{name: "inc", op1: op1} ->
           val = get_val(registers, op1)
           {:ok, registers} = set_register(registers, op1, val + 1)
 
           ip = get_register(registers, "ip")
-          set_register(registers, "ip", ip + 1)
+          {:ok, registers} = set_register(registers, "ip", ip + 1)
+          registers
 
         %Instruction{name: "jmp", op1: op1} ->
           op1 = get_val(registers, op1)
 
           ip = get_register(registers, "ip")
-          set_register(registers, "ip", ip + op1)
+          {:ok, registers} = set_register(registers, "ip", ip + op1)
+          registers
 
         %Instruction{name: "jie", op1: op1, op2: op2} ->
           op1 = get_val(registers, op1)
@@ -91,11 +100,14 @@ defmodule Turing do
 
           ip = get_register(registers, "ip")
 
-          if Integer.is_even(op1) do
-            set_register(registers, "ip", ip + op2)
-          else
-            set_register(registers, "ip", ip + 1)
-          end
+          {:ok, registers} =
+            if Integer.is_even(op1) do
+              set_register(registers, "ip", ip + op2)
+            else
+              set_register(registers, "ip", ip + 1)
+            end
+
+          registers
 
         %Instruction{name: "jio", op1: op1, op2: op2} ->
           op1 = get_val(registers, op1)
@@ -103,11 +115,14 @@ defmodule Turing do
 
           ip = get_register(registers, "ip")
 
-          if op1 == 1 do
-            set_register(registers, "ip", ip + op2)
-          else
-            set_register(registers, "ip", ip + 1)
-          end
+          {:ok, registers} =
+            if op1 == 1 do
+              set_register(registers, "ip", ip + op2)
+            else
+              set_register(registers, "ip", ip + 1)
+            end
+
+          registers
       end
 
     Agent.update(pid, fn _ -> registers end)
