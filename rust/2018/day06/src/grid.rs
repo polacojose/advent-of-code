@@ -4,7 +4,6 @@ use std::collections::HashSet;
 enum LocState {
     COORD(usize),
     Neutral,
-    UnInit,
 }
 
 #[derive(Debug, PartialEq, Eq)]
