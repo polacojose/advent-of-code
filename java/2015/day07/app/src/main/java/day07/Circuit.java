@@ -6,14 +6,14 @@ import java.util.Map;
 public class Circuit {
 
     Map<String, WireDefinition> wireMap;
-    Map<String, Integer> wireCache;
+    Map<String, Integer> resolvedWires;
 
     Circuit(WireDefinition[] wireDefinitions) {
         this.wireMap = new HashMap<>();
         for (WireDefinition wd : wireDefinitions) {
             this.wireMap.put(wd.name, wd);
         }
-        this.wireCache = new HashMap<>();
+        this.resolvedWires = new HashMap<>();
     }
 
     int resolveWireValue(String wireName) {
@@ -22,8 +22,8 @@ public class Circuit {
             throw new IllegalArgumentException();
         }
 
-        if (wireCache.containsKey(wireName)) {
-            return wireCache.get(wireName);
+        if (resolvedWires.containsKey(wireName)) {
+            return resolvedWires.get(wireName);
         }
 
         WireDefinition wd = wireMap.get(wireName);
@@ -34,7 +34,7 @@ public class Circuit {
                 resolvedDeps[i] = Integer.valueOf(deps[i]);
             } catch (Exception e) {
                 resolvedDeps[i] = resolveWireValue(deps[i]);
-                this.wireCache.put(deps[i], resolvedDeps[i]);
+                this.resolvedWires.put(deps[i], resolvedDeps[i]);
             }
         }
         return wd.resolve(resolvedDeps);
