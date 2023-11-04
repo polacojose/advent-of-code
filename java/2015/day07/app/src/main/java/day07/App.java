@@ -12,8 +12,10 @@ import java.util.List;
 public class App {
     public static void main(String[] args) {
         try {
-            part1();
-            part2();
+            int result = part1();
+            System.out.println(String.format("a wire: %d", result));
+            result = part2(result);
+            System.out.println(String.format("a wire: %d", result));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -42,16 +44,16 @@ public class App {
 
     }
 
-    static void part1() throws Exception {
+    static int part1() throws Exception {
         List<WireDefinition> wds = wireDefinitions();
         Circuit c = new Circuit(wds.toArray(new WireDefinition[] {}));
-        System.out.println(String.format("a wire: %d", c.resolveWireValue("a")));
+        return c.resolveWireValue("a");
     }
 
-    static void part2() throws Exception {
+    static int part2(int input) throws Exception {
         List<WireDefinition> wds = wireDefinitions();
-        wds.add(WireDefinition.parseString("16076 -> b"));
+        wds.add(WireDefinition.parseString(String.format("%d -> b", input)));
         Circuit c = new Circuit(wds.toArray(new WireDefinition[] {}));
-        System.out.println(String.format("a wire: %d", c.resolveWireValue("a")));
+        return c.resolveWireValue("a");
     }
 }
