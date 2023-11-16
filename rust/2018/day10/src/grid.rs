@@ -1,15 +1,17 @@
 use crate::vector::Vector;
 
 pub struct StarGrid {
-    resolution: usize,
+    resolution_x: usize,
+    resolution_y: usize,
     vectors: Vec<Vector>,
 }
 
 impl StarGrid {
-    pub fn new(resolution: usize, vectors: Vec<Vector>) -> Self {
+    pub fn new(resolution_x: usize, resolution_y: usize, vectors: Vec<Vector>) -> Self {
         Self {
             vectors,
-            resolution,
+            resolution_x,
+            resolution_y,
         }
     }
 
@@ -41,9 +43,9 @@ impl StarGrid {
 
     fn empty_grid(&self) -> Vec<Vec<bool>> {
         let mut vec_grid = Vec::new();
-        for _ in 0..=self.resolution {
+        for _ in 0..=self.resolution_y {
             let mut empty_row = Vec::new();
-            for _ in 0..=self.resolution {
+            for _ in 0..=self.resolution_x {
                 empty_row.push(false);
             }
             vec_grid.push(empty_row.clone());
@@ -53,8 +55,12 @@ impl StarGrid {
 
     pub fn x_divider(&self) -> f64 {
         let rect = Self::rect(&self.vectors);
+        (1.0 as f64).max(rect.width as f64 / self.resolution_x as f64)
+    }
 
-        (1.0 as f64).max(rect.width as f64 / self.resolution as f64)
+    pub fn y_divider(&self) -> f64 {
+        let rect = Self::rect(&self.vectors);
+        (1.0 as f64).max(rect.height as f64 / self.resolution_y as f64)
     }
 
     pub fn output(&self) -> String {
@@ -63,10 +69,8 @@ impl StarGrid {
         let x_offset = 0 - rect.origin.0;
         let y_offset = 0 - rect.origin.1;
 
-        let x_divider = (1.0 as f64).max(rect.width as f64 / self.resolution as f64);
-        let y_divider = (1.0 as f64).max(rect.height as f64 / self.resolution as f64);
-
-        println!("{:?} {:?}", x_divider, y_divider);
+        let x_divider = self.x_divider();
+        let y_divider = self.y_divider();
 
         let mut g = self.empty_grid();
         for v in &self.vectors {
@@ -130,14 +134,7 @@ mod tests {
 .......#...............
 ...........#..#........
 #...........#..........
-...#.......#...........
-.......................
-.......................
-.......................
-.......................
-.......................
-.......................
-......................."#
+...#.......#..........."#
             .trim();
 
         let vectors = fs::read_to_string("test-input.txt")
@@ -145,7 +142,7 @@ mod tests {
             .lines()
             .map(|x| x.parse::<Vector>().unwrap())
             .collect();
-        let grid = StarGrid::new(22, vectors);
+        let grid = StarGrid::new(22, 15, vectors);
         println!("{}", grid.output());
         assert_eq!(expected, grid.output());
     }
@@ -160,10 +157,7 @@ mod tests {
 #...#...#..
 #...#...#..
 #...#...#..
-#...#..###.
-...........
-...........
-..........."#
+#...#..###."#
             .trim();
 
         let vectors = fs::read_to_string("test-input.txt")
@@ -171,7 +165,7 @@ mod tests {
             .lines()
             .map(|x| x.parse::<Vector>().unwrap())
             .collect();
-        let mut grid = StarGrid::new(10, vectors);
+        let mut grid = StarGrid::new(10, 7, vectors);
 
         grid.delta(3);
         println!("{}", grid.output());

@@ -1,4 +1,4 @@
-use std::{fs, thread::sleep, time::Duration};
+use std::fs;
 
 use grid::StarGrid;
 use vector::Vector;
@@ -13,16 +13,22 @@ fn main() {
         .map(|s| s.parse::<Vector>().unwrap())
         .collect();
 
-    let mut grid = StarGrid::new(40, vectors);
+    let mut grid = StarGrid::new(65, 10, vectors);
 
     let mut seconds = 1;
+    let mut last_divider = f64::INFINITY;
+    let mut last_grid_output = String::new();
     loop {
         grid.delta(1);
-        if grid.x_divider() < 3.0 {
+
+        if grid.x_divider() > last_divider {
             println!("Seconds: {}", seconds);
-            println!("{}", grid.output());
-            sleep(Duration::from_millis(1000));
+            println!("{}\n", last_grid_output);
+            break;
         }
+        last_divider = grid.x_divider();
+        last_grid_output = grid.output();
+
         seconds += 1;
     }
 }
