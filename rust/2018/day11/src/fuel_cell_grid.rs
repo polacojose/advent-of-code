@@ -19,7 +19,7 @@ impl FuelCell {
 }
 
 pub struct FuelCellGrid {
-    grid_power: Arc<RwLock<[[i32; GRID_SIZE]; GRID_SIZE]>>,
+    summed_area_table: Arc<RwLock<[[i32; GRID_SIZE]; GRID_SIZE]>>,
 }
 impl FuelCellGrid {
     pub fn new(grid_serial_number: i32) -> Self {
@@ -30,18 +30,34 @@ impl FuelCellGrid {
             }
         }
 
+        let mut summed_area_table = [[0; GRID_SIZE]; GRID_SIZE];
+        for y in 0..GRID_SIZE {
+            for x in 0..GRID_SIZE {
+                let sum = (0..=y)
+                    .into_iter()
+                    .map(|yy| {
+                        (0..=x)
+                            .into_iter()
+                            .map(|xx| grid_power[yy][xx])
+                            .sum::<i32>()
+                    })
+                    .sum();
+                summed_area_table[y][x] = sum;
+            }
+        }
+
         Self {
-            grid_power: Arc::new(RwLock::new(grid_power)),
+            summed_area_table: Arc::new(RwLock::new(summed_area_table)),
         }
     }
 
     pub fn highest_power_rect(&self, rect: (u32, u32)) -> (usize, usize) {
         let mut h_p_r = (0, 0);
         let mut max_power = 0;
-        for y in 0..=GRID_SIZE - rect.1 as usize {
-            for x in 0..=GRID_SIZE - rect.0 as usize {
-                let grid = self.grid_power.read().unwrap();
-                let total_grid_power = Self::get_grid_power(grid, (x, y), (3, 3));
+        let grid = self.summed_area_table.read().unwrap();
+        for y in 0..GRID_SIZE - rect.1 as usize {
+            for x in 0..GRID_SIZE - rect.0 as usize {
+                let total_grid_power = Self::get_grid_power(&grid, (x, y), (3, 3));
                 if total_grid_power > max_power {
                     max_power = total_grid_power;
                     h_p_r = (x, y);
@@ -49,7 +65,7 @@ impl FuelCellGrid {
             }
         }
 
-        return h_p_r;
+        return (h_p_r.0 + 1, h_p_r.1 + 1);
     }
 
     pub fn highest_power_rect_flex_rect(&self) -> (usize, usize, usize) {
@@ -58,15 +74,15 @@ impl FuelCellGrid {
         let mut handles = Vec::new();
 
         for size in 1..GRID_SIZE {
-            let grid_arc = self.grid_power.clone();
+            let grid_arc = self.summed_area_table.clone();
             handles.push(rt.spawn(async move {
                 let mut h_p_r = (0, 0);
                 let mut max_power = 0;
                 let mut max_power_size = 0;
-                for y in 0..=GRID_SIZE - size {
-                    for x in 0..=GRID_SIZE - size {
-                        let grid = grid_arc.read().unwrap();
-                        let total_grid_power = Self::get_grid_power(grid, (x, y), (size, size));
+                let grid = grid_arc.read().unwrap();
+                for y in 0..GRID_SIZE - size {
+                    for x in 0..GRID_SIZE - size {
+                        let total_grid_power = Self::get_grid_power(&grid, (x, y), (size, size));
                         if total_grid_power > max_power {
                             max_power = total_grid_power;
                             h_p_r = (x, y);
@@ -91,24 +107,23 @@ impl FuelCellGrid {
                     max_power_size = mps;
                 }
             }
-            return (h_p_r.0, h_p_r.1, max_power_size);
+            return (h_p_r.0 + 1, h_p_r.1 + 1, max_power_size);
         });
 
         return result;
     }
 
     fn get_grid_power(
-        grid: RwLockReadGuard<'_, [[i32; 300]; 300]>,
+        summed_grid: &RwLockReadGuard<'_, [[i32; 300]; 300]>,
         tl: (usize, usize),
         size: (usize, usize),
     ) -> i32 {
-        let mut power = 0;
-        for y in tl.1..(tl.1 + size.1) {
-            for x in tl.0..(tl.0 + size.0) {
-                power += grid[y][x] as i32;
-            }
-        }
-        return power;
+        let tr = summed_grid[tl.1][tl.0 + size.0];
+        let bl = summed_grid[tl.1 + size.1][tl.0];
+        let br = summed_grid[tl.1 + size.1][tl.0 + size.0];
+        let tl = summed_grid[tl.1][tl.0];
+
+        return (tl + br - tr - bl) as i32;
     }
 }
 
