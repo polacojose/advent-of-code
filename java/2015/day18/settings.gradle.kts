@@ -13,8 +13,3 @@ plugins {
 rootProject.name = "day18"
 
 include("app")
-
-include(":fileLinesLoader")
-
-project(":fileLinesLoader").projectDir =
-        file("/Users/jose/Development/advent-of-code/java/support/FileLinesLoader/lib")
