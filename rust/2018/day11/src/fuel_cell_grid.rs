@@ -23,26 +23,34 @@ pub struct FuelCellGrid {
 }
 impl FuelCellGrid {
     pub fn new(grid_serial_number: i32) -> Self {
-        let mut grid_power = [[0; GRID_SIZE]; GRID_SIZE];
+        let mut grid_power = Vec::new();
         for y in 0..GRID_SIZE {
             for x in 0..GRID_SIZE {
-                grid_power[y][x] = FuelCell(x as i32, y as i32).power(grid_serial_number);
+                grid_power.push(FuelCell(x as i32, y as i32).power(grid_serial_number));
             }
         }
 
         let mut summed_area_table = [[0; GRID_SIZE]; GRID_SIZE];
+
         for y in 0..GRID_SIZE {
             for x in 0..GRID_SIZE {
-                let sum = (0..=y)
-                    .into_iter()
-                    .map(|yy| {
-                        (0..=x)
-                            .into_iter()
-                            .map(|xx| grid_power[yy][xx])
-                            .sum::<i32>()
-                    })
-                    .sum();
-                summed_area_table[y][x] = sum;
+                let a = grid_power[GRID_SIZE * y + x];
+                let b = if y > 0 {
+                    summed_area_table[y - 1][x]
+                } else {
+                    0
+                };
+                let c = if x > 0 {
+                    summed_area_table[y][x - 1]
+                } else {
+                    0
+                };
+                let d = if x > 0 && y > 0 {
+                    summed_area_table[y - 1][x - 1]
+                } else {
+                    0
+                };
+                summed_area_table[y][x] = a + b + c - d;
             }
         }
 
