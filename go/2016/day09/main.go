@@ -1,58 +1,30 @@
 package main
 
 import (
-	"bufio"
-	"day09/expander"
-	"fmt"
+	"bytes"
+	expandcounter "day09/expand_counter"
+	"log"
 	"os"
-	"time"
 )
 
 func main() {
-
-	f, err := os.Open("input.txt")
+	input_bytes, err := os.ReadFile("input.txt")
 	if err != nil {
-		fmt.Println(err)
-		return
+		log.Fatal(err)
 	}
-	defer f.Close()
+	input := string(bytes.TrimSpace(input_bytes))
+	part1(input)
+	part2(input)
+}
 
-	fileScanner := bufio.NewScanner(f)
-	fileScanner.Split(bufio.ScanLines)
+func part1(input string) {
+	expandCounter := expandcounter.NewExpandCounter(input, false)
+	count := expandCounter.Count()
+	println("Total expanded bytes:", count)
+}
 
-	for fileScanner.Scan() {
-		line := fileScanner.Text()
-		ex := expander.NewExpander([]byte(line), true)
-
-		totalBytes := 0
-		const buffLength = 1000000
-		buff := make([]byte, buffLength)
-		start := time.Now()
-		for {
-			read, err := ex.Expand(&buff)
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			totalBytes += read
-
-			if totalBytes%1000000 == 0 {
-				diff := time.Now().UnixMicro() - start.UnixMicro()
-				start = time.Now()
-				go func() {
-					fmt.Printf("%dµs / %d MiByte\n", diff, 1)
-					fmt.Println(totalBytes)
-				}()
-			}
-
-			//fmt.Print(string(buff[:read]))
-
-			if read == 0 {
-				break
-			}
-		}
-		fmt.Println()
-		fmt.Println(totalBytes)
-	}
-
+func part2(input string) {
+	expandCounter := expandcounter.NewExpandCounter(input, true)
+	count := expandCounter.Count()
+	println("Total expanded bytes recursive:", count)
 }
