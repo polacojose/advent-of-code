@@ -4,29 +4,18 @@ import (
 	"bufio"
 	"io"
 	"log"
-	"math"
+	"sort"
 	"strconv"
 	"strings"
 )
+
+const PROCESSOR_CORES = 4
+const JOBS_PER_CORE = 10
 
 type mapRange struct {
 	destination int
 	source      int
 	length      int
-}
-
-type rangeMapSet struct {
-	name      string
-	mapRanges []mapRange
-}
-
-func (r *rangeMapSet) destFromSource(s int) int {
-	for _, mr := range r.mapRanges {
-		if mr.source <= s && s <= mr.source+mr.length {
-			return mr.destination + s - mr.source
-		}
-	}
-	return s
 }
 
 type RangeMapChain struct {
@@ -60,6 +49,10 @@ func NewRangeMapChain(r io.Reader) RangeMapChain {
 			mapRanges = append(mapRanges, mr)
 		}
 
+		sort.Slice(mapRanges, func(i, j int) bool {
+			return mapRanges[i].source < mapRanges[j].source
+		})
+
 		chain = append(chain, rangeMapSet{name: name, mapRanges: mapRanges})
 	}
 
@@ -72,23 +65,61 @@ func (r *RangeMapChain) LowestNumberLocation() int {
 		for _, ms := range r.chain {
 			s = ms.destFromSource(s)
 		}
-		lowest = int(math.Min(float64(lowest), float64(s)))
+		lowest = min(lowest, s)
 	}
 	return lowest
 }
 
 func (r *RangeMapChain) LowestNumberLocationWithSeedRanges() int {
-	lowest := int(^uint(0) >> 1)
+
+	numberOfSeeds := 0
+	for si := 0; si < len(r.seeds); si += 2 {
+		numberOfSeeds += r.seeds[si+1]
+	}
+	numberOfSeedsPerCore := numberOfSeeds / (PROCESSOR_CORES * JOBS_PER_CORE)
+
+	type searchJob struct {
+		start  int
+		length int
+	}
+
+	jobs := make([]searchJob, 0, PROCESSOR_CORES)
 	for si := 0; si < len(r.seeds); si += 2 {
 		startSeed := r.seeds[si]
 		startLength := r.seeds[si+1]
-		for seed := startSeed; seed < startSeed+startLength; seed++ {
-			pathVar := seed
-			for _, ms := range r.chain {
-				pathVar = ms.destFromSource(pathVar)
-			}
-			lowest = int(math.Min(float64(lowest), float64(pathVar)))
+		for startLength > 0 {
+			jobLength := min(startLength, numberOfSeedsPerCore)
+			jobs = append(jobs, searchJob{
+				start:  startSeed,
+				length: startLength,
+			})
+			startSeed += jobLength
+			startLength -= jobLength
 		}
+	}
+
+	ch := make(chan int)
+	defer close(ch)
+
+	for _, job := range jobs {
+		startSeed := job.start
+		startLength := job.length
+		go func() {
+			lowest := int(^uint(0) >> 1)
+			for seed := startSeed; seed < startSeed+startLength; seed++ {
+				pathVar := seed
+				for _, ms := range r.chain {
+					pathVar = ms.destFromSource(pathVar)
+				}
+				lowest = min(lowest, pathVar)
+			}
+			ch <- lowest
+		}()
+	}
+
+	lowest := int(^uint(0) >> 1)
+	for si := 0; si < len(r.seeds); si += 2 {
+		lowest = min(lowest, <-ch)
 	}
 	return lowest
 }
