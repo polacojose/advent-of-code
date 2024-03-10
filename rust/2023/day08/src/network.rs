@@ -22,13 +22,13 @@ impl FromStr for Dir {
 }
 
 #[derive(Debug)]
-struct NetworkNodeRaw {
+struct RawNetworkNode {
     name: String,
     left: String,
     right: String,
 }
 
-impl FromStr for NetworkNodeRaw {
+impl FromStr for RawNetworkNode {
     type Err = UnableToParse;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -39,7 +39,7 @@ impl FromStr for NetworkNodeRaw {
 
         let parts: Vec<&str> = cleaned.split_whitespace().collect();
 
-        Ok(NetworkNodeRaw {
+        Ok(RawNetworkNode {
             name: parts[0].to_owned(),
             left: parts[1].to_owned(),
             right: parts[2].to_owned(),
@@ -63,9 +63,9 @@ impl FromStr for Network {
     type Err = UnableToParse;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let raw_network_nodes: Vec<NetworkNodeRaw> = s
+        let raw_network_nodes: Vec<RawNetworkNode> = s
             .lines()
-            .map(|l| l.parse::<NetworkNodeRaw>().unwrap())
+            .map(|l| l.parse::<RawNetworkNode>().unwrap())
             .collect();
 
         let network_nodes = raw_network_nodes
@@ -94,7 +94,45 @@ impl FromStr for Network {
 }
 
 impl Network {
-    pub fn steps(&self, instructions: Vec<Dir>) -> u32 {
+    pub fn steps_from_all_starts(&self, instructions: &Vec<Dir>) -> Vec<u64> {
+        let start_indexes = self
+            .nodes
+            .iter()
+            .enumerate()
+            .filter(|(_, nn)| nn.name.ends_with("A"))
+            .map(|(i, _)| i)
+            .collect::<Vec<usize>>();
+
+        let steps = start_indexes
+            .iter()
+            .map(|mut n| {
+                let mut num_steps = 0;
+                let mut inst_index = 0;
+                loop {
+                    let inst = &instructions[inst_index];
+                    num_steps += 1;
+
+                    //print!("{:?}=>", self.nodes[*s].name);
+                    match inst {
+                        Dir::Left => n = &self.nodes[*n].left,
+                        Dir::Right => n = &self.nodes[*n].right,
+                    };
+                    // println!("{:?}", self.nodes[*s].name);
+
+                    if self.nodes[*n].name.ends_with("Z") {
+                        return num_steps;
+                    }
+
+                    inst_index += 1;
+                    inst_index = inst_index % instructions.len();
+                }
+            })
+            .collect();
+
+        steps
+    }
+
+    pub fn steps_from_single_start(&self, instructions: &Vec<Dir>) -> u32 {
         let start_index = self.nodes.iter().position(|nn| nn.name == "AAA").unwrap();
         let end_index = self.nodes.iter().position(|nn| nn.name == "ZZZ").unwrap();
         let mut current_index = start_index;
@@ -118,6 +156,8 @@ impl Network {
 
 #[cfg(test)]
 mod tests {
+    use lcmx::lcmx;
+
     use super::*;
 
     #[test]
@@ -130,9 +170,9 @@ EEE = (EEE, EEE)
 GGG = (GGG, GGG)
 ZZZ = (ZZZ, ZZZ)"#;
 
-        let raw_network_nodes: Vec<NetworkNodeRaw> = node_str
+        let raw_network_nodes: Vec<RawNetworkNode> = node_str
             .lines()
-            .map(|l| l.parse::<NetworkNodeRaw>().unwrap())
+            .map(|l| l.parse::<RawNetworkNode>().unwrap())
             .collect();
 
         assert_eq!(raw_network_nodes[0].left, "BBB");
@@ -201,8 +241,9 @@ ZZZ = (ZZZ, ZZZ)"#;
         let network = node_str.parse::<Network>().unwrap();
 
         assert_eq!(
-            network.steps(
-                "RL".chars()
+            network.steps_from_single_start(
+                &"RL"
+                    .chars()
                     .map(|c| c.to_string().parse::<Dir>().unwrap())
                     .collect()
             ),
@@ -216,13 +257,36 @@ ZZZ = (ZZZ, ZZZ)"#;
         let network = node_str.parse::<Network>().unwrap();
 
         assert_eq!(
-            network.steps(
-                "LLR"
+            network.steps_from_single_start(
+                &"LLR"
                     .chars()
                     .map(|c| c.to_string().parse::<Dir>().unwrap())
                     .collect()
             ),
             6
         );
+    }
+
+    #[test]
+    fn can_find_steps_from_all_starts() {
+        let node_str = r#"11A = (11B, XXX)
+11B = (XXX, 11Z)
+11Z = (11B, XXX)
+22A = (22B, XXX)
+22B = (22C, 22C)
+22C = (22Z, 22Z)
+22Z = (22B, 22B)
+XXX = (XXX, XXX)"#;
+
+        let network = node_str.parse::<Network>().unwrap();
+
+        let result = network.steps_from_all_starts(
+            &"LR"
+                .chars()
+                .map(|c| c.to_string().parse::<Dir>().unwrap())
+                .collect(),
+        );
+
+        assert_eq!(lcmx(&result).unwrap(), 6)
     }
 }
