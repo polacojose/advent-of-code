@@ -6,6 +6,17 @@ import (
 	"testing"
 )
 
+func TestCanCompressMapRanges(t *testing.T) {
+	f, err := os.Open("test-input.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+
+	rangeMapChain := NewRangeMapChain(f, true)
+	log.Println("Final Chain:", rangeMapChain)
+}
+
 func TestFindLowestNumberLocation(t *testing.T) {
 	f, err := os.Open("test-input.txt")
 	if err != nil {
@@ -13,7 +24,7 @@ func TestFindLowestNumberLocation(t *testing.T) {
 	}
 	defer f.Close()
 
-	rangeMapChain := NewRangeMapChain(f)
+	rangeMapChain := NewRangeMapChain(f, true)
 
 	l := rangeMapChain.LowestNumberLocation()
 	if l != 35 {
@@ -21,16 +32,16 @@ func TestFindLowestNumberLocation(t *testing.T) {
 	}
 }
 
-func TestFindLowestNumberLocationWithSeedRanges(t *testing.T) {
+func TestFindLowestNumberLocationWithSeedRange(t *testing.T) {
 	f, err := os.Open("test-input.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer f.Close()
 
-	rangeMapChain := NewRangeMapChain(f)
+	rangeMapChain := NewRangeMapChain(f, false)
 
-	l := rangeMapChain.LowestNumberLocationWithSeedRanges()
+	l := rangeMapChain.LowestNumberLocation()
 	if l != 46 {
 		t.Fatalf("Lowest number location should be 46 not %d", l)
 	}
