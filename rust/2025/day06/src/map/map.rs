@@ -33,6 +33,7 @@ pub struct Map {
     pub(super) guard_move_vector: IVec2,
 }
 
+#[derive(Debug)]
 pub enum SolveCompletion {
     OffTheMap,
     InALoop,
@@ -48,24 +49,8 @@ impl Map {
             .filter(|n| matches!(n, MapNodeKind::Path))
             .count()
     }
-}
 
-impl Map {
     pub fn solve(&mut self) -> Result<SolveCompletion, SolveError> {
-        let s = self.solve_loop();
-
-        let guard_pos = self
-            .nodes
-            .iter_mut()
-            .find(|n| n.is_guard())
-            .ok_or(SolveError("No guard present."))?;
-
-        *guard_pos = MapNodeKind::Path;
-
-        s
-    }
-
-    fn solve_loop(&mut self) -> Result<SolveCompletion, SolveError> {
         let mut loop_detect_set = HashSet::new();
 
         let mut guard_pos = self
@@ -89,39 +74,57 @@ impl Map {
                 loop_detect_set.insert(e);
             }
 
-            let forward_vector = guard_pos + self.guard_move_vector;
-            let f_n = self.get_node(forward_vector);
+            let fn_idx = self.forward_to_next_available_node(guard_pos);
 
-            if let None = f_n {
+            if let None = fn_idx {
                 return Ok(SolveCompletion::OffTheMap);
             }
 
-            let forward_node = f_n.ok_or(SolveError("No foward node"))?;
+            let forward_node_idx = fn_idx.ok_or(SolveError("No foward node"))?;
 
-            let guard_idx = self
-                .vector_to_index(guard_pos)
-                .ok_or(SolveError("Incorrect index_to_vector conversion"))?;
+            guard_pos = self
+                .index_to_vector(forward_node_idx)
+                .ok_or(SolveError("No guard node"))?;
 
-            match forward_node {
-                MapNodeKind::Barrier => {
-                    self.rotate_guard_at(guard_idx)
-                        .map_err(|_| SolveError("Unable to rotate guard"))?;
-                }
-                _ => {
-                    let guard_node = self.nodes[guard_idx].clone();
-
-                    let forward_node_mut = self
-                        .get_node_mut(forward_vector)
-                        .ok_or(SolveError("No foward node"))?;
-
-                    *forward_node_mut = guard_node;
-
-                    self.nodes[guard_idx] = MapNodeKind::Path;
-                    guard_pos = guard_pos + self.guard_move_vector;
-                }
-            }
+            self.rotate_guard_at(forward_node_idx)
+                .map_err(|_| SolveError("Unable to rotate guard"))?;
         }
     }
+}
+
+impl Map {
+    fn forward_to_next_available_node(&mut self, guard_pos: IVec2) -> Option<usize> {
+        let last_guard_kind = self.nodes[self.vector_to_index(guard_pos)?].clone();
+
+        let mut last_idx = None;
+        let mut next_vec = guard_pos;
+
+        loop {
+            let idx = self.vector_to_index(next_vec);
+
+            if let Some(idx) = idx {
+                let node_kind = &self.nodes[idx];
+                match node_kind {
+                    MapNodeKind::Barrier => break,
+                    _ => {
+                        self.nodes[idx] = MapNodeKind::Path;
+                        last_idx = Some(idx)
+                    }
+                }
+            } else {
+                return None;
+            }
+
+            next_vec = next_vec + self.guard_move_vector;
+        }
+
+        if let Some(idx) = last_idx {
+            self.nodes[idx] = last_guard_kind;
+        }
+        last_idx
+    }
+
+    #[cfg(test)]
     fn rotate_guard(&mut self) -> Result<(), ()> {
         let idx = self
             .nodes
@@ -167,15 +170,6 @@ impl Map {
             return None;
         }
         Some((uy * self.width + ux) as usize)
-    }
-
-    fn get_node(&self, p: IVec2) -> Option<&MapNodeKind> {
-        self.nodes.get(self.vector_to_index(p)?)
-    }
-
-    fn get_node_mut(&mut self, p: IVec2) -> Option<&mut MapNodeKind> {
-        let idx = self.vector_to_index(p)?;
-        self.nodes.get_mut(idx)
     }
 }
 

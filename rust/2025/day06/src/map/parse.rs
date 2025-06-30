@@ -25,16 +25,10 @@ impl FromStr for Map {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let height = s.trim().lines().count();
 
-        let (width, nodes) = s.trim().lines().enumerate().fold(
+        let (width, nodes) = s.trim().lines().fold(
             (0, Vec::new()),
-            |(_, mut acc): (usize, Vec<MapNodeKind>), (y, l)| {
-                let mut map_nodes: Vec<MapNodeKind> = l
-                    .trim()
-                    .chars()
-                    .enumerate()
-                    .map(|(x, c)| c.into())
-                    .collect();
-
+            |(_, mut acc): (usize, Vec<MapNodeKind>), l| {
+                let mut map_nodes: Vec<MapNodeKind> = l.trim().chars().map(|c| c.into()).collect();
                 let width = map_nodes.len();
                 acc.append(&mut map_nodes);
                 (width, acc)
@@ -68,18 +62,6 @@ impl FromStr for Map {
 mod test {
 
     use super::*;
-
-    const TEST_MAP_STR: &str = r"....#.....
-.........#
-..........
-..#.......
-.......#..
-..........
-.#..^.....
-........#.
-#.........
-......#...
-";
 
     #[test]
     pub fn test_map_node_kind_parse() {

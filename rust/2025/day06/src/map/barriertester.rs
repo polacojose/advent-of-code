@@ -6,7 +6,7 @@ pub fn barrier_solve(root_map: &Map) -> Vec<SolveCompletion> {
     let node_count = root_map.width * root_map.height;
 
     (0..node_count)
-        .into_iter()
+        .into_par_iter()
         .filter(|i| {
             if let Some(n) = root_map.nodes.get(*i) {
                 match n {
@@ -17,11 +17,8 @@ pub fn barrier_solve(root_map: &Map) -> Vec<SolveCompletion> {
                 false
             }
         })
-        .collect::<Vec<_>>()
-        .into_par_iter()
         .filter_map(|i| {
             let mut m = root_map.clone();
-
             if let Some(n) = m.nodes.get_mut(i) {
                 *n = MapNodeKind::Barrier;
                 if let Ok(sc) = m.solve() {
@@ -51,18 +48,6 @@ mod test {
 ........#.
 #.........
 ......#...
-";
-
-    const TEST_MAP_SOLVED_STR: &str = r"....#.....
-....XXXXX#
-....X...X.
-..#.X...X.
-..XXXXX#X.
-..X.X.X.X.
-.#XXXXXXX.
-.XXXXXXX#.
-#XXXXXXX..
-......#X..
 ";
 
     #[test]
