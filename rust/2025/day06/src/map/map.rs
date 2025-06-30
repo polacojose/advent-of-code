@@ -89,7 +89,8 @@ impl Map {
                 loop_detect_set.insert(e);
             }
 
-            let f_n = self.get_node(guard_pos + self.guard_move_vector);
+            let forward_vector = guard_pos + self.guard_move_vector;
+            let f_n = self.get_node(forward_vector);
 
             if let None = f_n {
                 return Ok(SolveCompletion::OffTheMap);
@@ -107,24 +108,15 @@ impl Map {
                         .map_err(|_| SolveError("Unable to rotate guard"))?;
                 }
                 _ => {
-                    let guard_node = self
-                        .nodes
-                        .get(guard_idx)
-                        .ok_or(SolveError("Unable to get guard node."))?
-                        .clone();
+                    let guard_node = self.nodes[guard_idx].clone();
 
                     let forward_node_mut = self
-                        .get_node_mut(guard_pos + self.guard_move_vector)
+                        .get_node_mut(forward_vector)
                         .ok_or(SolveError("No foward node"))?;
 
                     *forward_node_mut = guard_node;
 
-                    let guard_node_mut = self
-                        .nodes
-                        .get_mut(guard_idx)
-                        .ok_or(SolveError("Unable to get guard node."))?;
-
-                    *guard_node_mut = MapNodeKind::Path;
+                    self.nodes[guard_idx] = MapNodeKind::Path;
                     guard_pos = guard_pos + self.guard_move_vector;
                 }
             }
