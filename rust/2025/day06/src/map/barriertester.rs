@@ -6,7 +6,7 @@ pub fn barrier_solve(root_map: &Map) -> Vec<SolveCompletion> {
     let node_count = root_map.width * root_map.height;
 
     (0..node_count)
-        .into_par_iter()
+        .into_iter()
         .filter(|i| {
             if let Some(n) = root_map.nodes.get(*i) {
                 match n {
@@ -17,6 +17,8 @@ pub fn barrier_solve(root_map: &Map) -> Vec<SolveCompletion> {
                 false
             }
         })
+        .collect::<Vec<_>>()
+        .into_par_iter()
         .filter_map(|i| {
             let mut m = root_map.clone();
 

@@ -68,20 +68,19 @@ impl Map {
     fn solve_loop(&mut self) -> Result<SolveCompletion, SolveError> {
         let mut loop_detect_set = HashSet::new();
 
+        let mut guard_pos = self
+            .index_to_vector(
+                self.nodes
+                    .iter()
+                    .enumerate()
+                    .find_map(|(idx, n)| if n.is_guard() { Some(idx) } else { None })
+                    .ok_or(SolveError("No guard present."))?,
+            )
+            .ok_or(SolveError("Incorrect index_to_vector conversion"))?;
+
         //While the guard is on the map
         loop {
-            let guard_pos = self
-                .index_to_vector(
-                    self.nodes
-                        .iter()
-                        .enumerate()
-                        .find_map(|(idx, n)| if n.is_guard() { Some(idx) } else { None })
-                        .ok_or(SolveError("No guard present."))?,
-                )
-                .ok_or(SolveError("Incorrect index_to_vector conversion"))?;
-
             //Loop Detection
-
             {
                 let e = (guard_pos, self.guard_move_vector);
                 if loop_detect_set.contains(&e) {
@@ -98,16 +97,16 @@ impl Map {
 
             let forward_node = f_n.ok_or(SolveError("No foward node"))?;
 
+            let guard_idx = self
+                .vector_to_index(guard_pos)
+                .ok_or(SolveError("Incorrect index_to_vector conversion"))?;
+
             match forward_node {
                 MapNodeKind::Barrier => {
-                    self.rotate_guard()
+                    self.rotate_guard_at(guard_idx)
                         .map_err(|_| SolveError("Unable to rotate guard"))?;
                 }
                 _ => {
-                    let guard_idx = self
-                        .vector_to_index(guard_pos)
-                        .ok_or(SolveError("Incorrect index_to_vector conversion"))?;
-
                     let guard_node = self
                         .nodes
                         .get(guard_idx)
@@ -126,12 +125,23 @@ impl Map {
                         .ok_or(SolveError("Unable to get guard node."))?;
 
                     *guard_node_mut = MapNodeKind::Path;
+                    guard_pos = guard_pos + self.guard_move_vector;
                 }
             }
         }
     }
     fn rotate_guard(&mut self) -> Result<(), ()> {
-        let guard = self.nodes.iter_mut().find(|n| n.is_guard()).ok_or(())?;
+        let idx = self
+            .nodes
+            .iter()
+            .enumerate()
+            .find_map(|(i, n)| if n.is_guard() { Some(i) } else { None })
+            .ok_or(())?;
+        self.rotate_guard_at(idx)
+    }
+
+    fn rotate_guard_at(&mut self, idx: usize) -> Result<(), ()> {
+        let guard = self.nodes.get_mut(idx).ok_or(())?;
 
         let new_guard_kind = match guard {
             MapNodeKind::GuardUp => Ok(MapNodeKind::GuardRight),
