@@ -5,4 +5,4 @@ edition = "2024"
 
 [dependencies]
 glam = "0.30.4"
-grid = {path = "/Users/jose/Development/advent-of-code/rust/util/grid"}
+grid = {git = "ssh://git@github.com/polacojose/rust_grid.git"}

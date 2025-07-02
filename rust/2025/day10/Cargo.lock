@@ -19,6 +19,7 @@ checksum = "50a99dbe56b72736564cfa4b85bf9a33079f16ae8b74983ab06af3b1a3696b11"
 [[package]]
 name = "grid"
 version = "0.1.0"
+source = "git+ssh://git@github.com/polacojose/rust_grid.git#8a370e78233dd7cd68bb65cb62d4daabc32079fe"
 dependencies = [
  "glam",
 ]
