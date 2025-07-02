@@ -1,7 +1,6 @@
 use std::{collections::HashMap, fs};
 
 use day11::blink::{Stone, blink_n};
-use gapbuf::GapBuffer;
 
 fn main() {
     println!("Part1 {}", num_stones(25));
@@ -14,12 +13,12 @@ fn num_stones(i: u32) -> usize {
         .trim()
         .split_whitespace()
         .map(|s| Stone(s.trim().parse::<u64>().unwrap()))
-        .collect::<GapBuffer<_>>();
+        .collect::<Vec<_>>();
 
     let mut stone_map = HashMap::new();
     let total_stones = stones
         .into_iter()
-        .flat_map(|s| blink_n(i, &s, &mut stone_map))
-        .collect::<Vec<_>>();
-    total_stones.len()
+        .map(|s| blink_n(i, &s, &mut stone_map))
+        .sum::<usize>();
+    total_stones
 }

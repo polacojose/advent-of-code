@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 
-use gapbuf::GapBuffer;
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Stone(pub u64);
 
@@ -22,31 +20,38 @@ impl Stone {
             }
         }
     }
+
+    pub fn blink_len(&self) -> usize {
+        match self.0 {
+            x if num_digits(x) % 2 == 0 => 2,
+            _ => 1,
+        }
+    }
 }
 
-pub fn blink_n(
-    n: u32,
-    stone: &Stone,
-    stone_map: &mut HashMap<(u32, u64), Vec<Stone>>,
-) -> Vec<Stone> {
+pub fn blink_n(n: u32, stone: &Stone, stone_map: &mut HashMap<(u32, u64), usize>) -> usize {
     b_n(n - 1, stone, stone_map)
 }
 
-fn b_n(n: u32, stone: &Stone, stone_map: &mut HashMap<(u32, u64), Vec<Stone>>) -> Vec<Stone> {
-    if let Some(rs) = stone_map.get(&(n, stone.0)) {
-        return rs.clone();
-    }
-
+fn b_n(n: u32, stone: &Stone, stone_map: &mut HashMap<(u32, u64), usize>) -> usize {
     if n == 0 {
-        let result_stone = stone.blink();
-        stone_map.insert((0, stone.0), result_stone.clone());
-        return result_stone;
+        let result_stone_len = stone.blink_len();
+        return result_stone_len;
     }
 
-    b_n(n - 1, stone, stone_map)
+    if let Some(rs) = stone_map.get(&(n, stone.0)) {
+        return *rs;
+    }
+
+    let sum = stone
+        .blink()
         .into_iter()
-        .flat_map(|s| b_n(0, &s, stone_map))
-        .collect()
+        .map(|s| b_n(n - 1, &s, stone_map))
+        .sum();
+
+    stone_map.insert((n, stone.0), sum);
+
+    sum
 }
 
 fn num_digits(n: u64) -> u32 {
@@ -57,7 +62,7 @@ fn num_digits(n: u64) -> u32 {
     digits
 }
 
-pub fn blink_stones(stones: &mut GapBuffer<Stone>) {
+pub fn blink_stones(stones: &mut Vec<Stone>) {
     let mut idx = 0;
     while idx < stones.len() {
         let stone_val = stones[idx].0;
@@ -122,7 +127,7 @@ mod test {
             .trim()
             .split_whitespace()
             .map(|s| Stone(s.trim().parse::<u64>().unwrap()))
-            .collect::<GapBuffer<_>>();
+            .collect::<Vec<_>>();
         test_blink_stones!(&mut stones, "253000 1 7");
         test_blink_stones!(&mut stones, "253 0 2024 14168");
         test_blink_stones!(&mut stones, "512072 1 20 24 28676032");
@@ -143,7 +148,7 @@ mod test {
             .trim()
             .split_whitespace()
             .map(|s| Stone(s.trim().parse::<u64>().unwrap()))
-            .collect::<GapBuffer<_>>();
+            .collect::<Vec<_>>();
 
         for _ in 0..25 {
             blink_stones(&mut stones);
@@ -158,14 +163,14 @@ mod test {
             .trim()
             .split_whitespace()
             .map(|s| Stone(s.trim().parse::<u64>().unwrap()))
-            .collect::<GapBuffer<_>>();
+            .collect::<Vec<_>>();
 
         let mut stone_map = HashMap::new();
         let total_stones = stones
             .into_iter()
-            .flat_map(|s| blink_n(25, &s, &mut stone_map))
-            .collect::<Vec<_>>();
+            .map(|s| blink_n(25, &s, &mut stone_map))
+            .sum::<usize>();
 
-        assert_eq!(total_stones.len(), 55312);
+        assert_eq!(total_stones, 55312);
     }
 }
