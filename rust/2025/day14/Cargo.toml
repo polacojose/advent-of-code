@@ -1,0 +1,10 @@
+[package]
+name = "day14"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clearscreen = "4.0.2"
+glam = "0.30.4"
+rayon = "1.10.0"
+regex = "1.11.1"
