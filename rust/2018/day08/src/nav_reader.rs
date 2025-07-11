@@ -50,14 +50,18 @@ where
                 break;
             }
 
-            if buff[0] == ' ' as u8 || buff[0] == '\n' as u8 {
-                self.next_num =
-                    if let Some(num_str) = std::str::from_utf8(&num_buff[0..num_buff_index]).ok() {
+            match buff[0] as char {
+                ' ' | '\n' => {
+                    self.next_num = if let Some(num_str) =
+                        std::str::from_utf8(&num_buff[0..num_buff_index]).ok()
+                    {
                         num_str.parse().ok()
                     } else {
                         None
                     };
-                break;
+                    break;
+                }
+                _ => {}
             }
 
             num_buff[num_buff_index] = buff[0];

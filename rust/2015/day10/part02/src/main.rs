@@ -23,7 +23,7 @@ fn main() {
 
         output_line.push_str(format!("{}{}", run_length, run_char.unwrap()).as_str());
 
-        println!("{} = {}", line, output_line);
+        //println!("{} = {}", line, output_line);
         line = output_line;
     }
     println!("{}", line.len());

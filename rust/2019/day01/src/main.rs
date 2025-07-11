@@ -35,6 +35,7 @@ fn calculate_fuel_with_fuel_mass(mass: u32) -> u32 {
     if fuel_mass == 0 {
         return 0;
     }
+
     fuel_mass + calculate_fuel_with_fuel_mass(fuel_mass)
 }
 

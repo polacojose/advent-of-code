@@ -2,10 +2,9 @@ mod nav_reader;
 mod nav_tree;
 mod string_reader;
 
-use std::fs::File;
-
 use nav_reader::NavReader;
 use nav_tree::NavTree;
+use std::fs::File;
 
 fn main() {
     let mut nav_reader = NavReader::new(File::open("input.txt").unwrap()).unwrap();

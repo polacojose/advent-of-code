@@ -1,4 +1,4 @@
-use std::fs;
+use std::{fs, thread::sleep, time::Duration};
 
 const GRID_X: isize = 100;
 const GRID_Y: isize = 100;

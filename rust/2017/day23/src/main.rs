@@ -160,24 +160,3 @@ fn part2(instructions: &Vec<Instruction>) {
     }
     println!("{:?}", *REGISTER.read().unwrap());
 }
-
-fn pseudo() {
-    let b = 123;
-    let mut d = 2;
-    let mut f = 1;
-
-    while d < b {
-        let mut e = 2;
-        while e < b {
-            if d * e == b {
-                f = 0;
-            }
-            e += 1;
-
-            if e == b {
-                break;
-            }
-        }
-        d += 1;
-    }
-}

@@ -1,3 +1,3 @@
 pub mod display;
-pub mod map;
+pub mod grid;
 mod parse;

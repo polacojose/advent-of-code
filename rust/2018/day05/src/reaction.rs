@@ -54,7 +54,6 @@ pub fn solve_shortest_length_with_removal(polymer: impl AsRef<str>) -> usize {
     let rt = tokio::runtime::Runtime::new().unwrap();
 
     let mut futures = Vec::new();
-
     for alpha in 'a'..'z' {
         let polymer = polymer.as_ref().to_owned();
         futures

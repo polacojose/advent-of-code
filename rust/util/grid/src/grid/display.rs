@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::grid::map::Grid;
+use crate::grid::grid::Grid;
 
 impl<T> Display for Grid<T>
 where

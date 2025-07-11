@@ -8,6 +8,14 @@ pub struct Grid<T> {
 }
 
 impl<T> Grid<T> {
+    pub fn width(&self) -> i32 {
+        self.width
+    }
+
+    pub fn height(&self) -> i32 {
+        self.height
+    }
+
     pub fn get_nodes(&self) -> &Vec<T> {
         &self.nodes
     }

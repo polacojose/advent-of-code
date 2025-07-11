@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 enum State {
     RawRead,
     TokenDecode,
@@ -10,6 +12,20 @@ pub struct Inflator<'a> {
     pos: usize,
     char_count: usize,
     state: State,
+}
+
+impl<'a> Debug for Inflator<'a> {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(_f, "Recursive: {}", self.recursive)?;
+        writeln!(_f, "Position: {}", self.pos)?;
+        writeln!(_f, "Character Count: {}", self.char_count)?;
+        match self.state {
+            State::RawRead => writeln!(_f, "State: Raw Read")?,
+            State::TokenDecode => writeln!(_f, "State: Token Decode")?,
+            State::Done => writeln!(_f, "State: Done")?,
+        }
+        Ok(())
+    }
 }
 
 impl<'a> Inflator<'a> {
@@ -27,7 +43,7 @@ impl<'a> Inflator<'a> {
         while self.pos < self.reference_chars.len() {
             match self.state {
                 State::RawRead => self.raw_read(),
-                State::TokenDecode => self.token_decode(),
+                State::TokenDecode => self.token_decode().expect("Unable to decode token"),
                 State::Done => return,
             }
         }
@@ -35,11 +51,13 @@ impl<'a> Inflator<'a> {
 
     pub fn count_inflated(&mut self) -> usize {
         self.scan();
-        return self.char_count;
+        self.char_count
     }
 }
 
 impl Inflator<'_> {
+
+    /// Raw read counds characters until it finds a `(`
     fn raw_read(&mut self) {
         if let Some(pos) = self.reference_chars[self.pos..]
             .iter()
@@ -57,30 +75,39 @@ impl Inflator<'_> {
     }
 }
 
+#[derive(Debug)]
+struct MalformedBytes;
+
 impl Inflator<'_> {
-    fn token_decode(&mut self) {
-        let pos = self.reference_chars[self.pos..]
+
+    /// Token decode decodes a token `(length)x(repetition)`
+    /// and then counts `length` characters `repetition` times
+    /// if recursive is true, it also inflates any nested tokens
+    fn token_decode(&mut self) -> Result<(), MalformedBytes> {
+        let end_pos = self.reference_chars[self.pos..]
             .iter()
             .position(|c| c == &')')
-            .unwrap();
+            .ok_or(MalformedBytes)?;
 
-        let token_string = self.reference_chars[self.pos + 1..self.pos + pos]
+        let token_string = self.reference_chars[self.pos + 1..self.pos + end_pos]
             .iter()
             .collect::<String>();
-        let (a, b) = token_string.split_once("x").unwrap();
-        let token_decode_length = a.parse::<usize>().unwrap();
-        let token_decode_repetition = b.parse::<usize>().unwrap();
+        let (l, r) = token_string.split_once("x").ok_or(MalformedBytes)?;
+        let length = l.parse::<usize>().map_err(|_| MalformedBytes)?;
+        let repetition = r.parse::<usize>().map_err(|_| MalformedBytes)?;
 
         if self.recursive {
-            let sub_pos = (self.pos + token_string.len() + 2) as usize;
-            let sub = &self.reference_chars[sub_pos..sub_pos + token_decode_length];
+            let sub_pos = self.pos + token_string.len() + 2;
+            let sub = &self.reference_chars[sub_pos..sub_pos + length];
             let mut inf = Inflator::new(sub, true);
-            self.char_count += token_decode_repetition * inf.count_inflated();
+            self.char_count += repetition * inf.count_inflated();
         } else {
-            self.char_count += token_decode_length * token_decode_repetition;
+            self.char_count += length * repetition;
         }
-        self.pos += token_string.len() + token_decode_length + 2;
+        self.pos += token_string.len() + length + 2;
         self.state = State::RawRead;
+
+        Ok(())
     }
 }
 

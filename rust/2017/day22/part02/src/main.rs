@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs, thread::sleep, time::Duration};
+use std::{collections::HashMap, fs};
 
 #[derive(Debug, Hash, Clone, Copy, PartialEq, Eq)]
 enum Heading {

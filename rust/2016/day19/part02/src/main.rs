@@ -22,10 +22,10 @@ fn find_josephus_non_recur(num: usize) -> usize {
     let mut seats = (1..=num).collect::<VecDeque<usize>>();
 
     while seats.len() > 1 {
-        println!("{}", seats.len());
         seats.remove(seats.len() / 2);
 
         seats.rotate_left(1);
+        println!("{}", seats.len());
     }
     return seats.pop_front().unwrap();
 }

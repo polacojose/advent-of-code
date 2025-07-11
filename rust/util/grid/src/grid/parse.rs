@@ -1,6 +1,6 @@
 use std::{io, str::FromStr};
 
-use crate::grid::map::Grid;
+use crate::grid::grid::Grid;
 
 impl<T> FromStr for Grid<T>
 where
