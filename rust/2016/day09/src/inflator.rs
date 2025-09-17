@@ -28,6 +28,8 @@ impl<'a> Debug for Inflator<'a> {
     }
 }
 
+#[derive(Debug)]
+struct MalformedToken;
 impl<'a> Inflator<'a> {
     pub fn new(reference_chars: &'a [char], recursive: bool) -> Self {
         Self {
@@ -39,7 +41,19 @@ impl<'a> Inflator<'a> {
         }
     }
 
+    pub fn count_inflated(&mut self) -> usize {
+        self.scan();
+        self.char_count
+    }
+
+    fn reset(&mut self) {
+        self.pos = 0;
+        self.char_count = 0;
+        self.state = State::RawRead;
+    }
+
     fn scan(&mut self) {
+        self.reset();
         while self.pos < self.reference_chars.len() {
             match self.state {
                 State::RawRead => self.raw_read(),
@@ -48,14 +62,6 @@ impl<'a> Inflator<'a> {
             }
         }
     }
-
-    pub fn count_inflated(&mut self) -> usize {
-        self.scan();
-        self.char_count
-    }
-}
-
-impl Inflator<'_> {
 
     /// Raw read counds characters until it finds a `(`
     fn raw_read(&mut self) {
@@ -73,31 +79,28 @@ impl Inflator<'_> {
         self.pos = self.reference_chars.len() - 1;
         self.state = State::Done;
     }
-}
-
-#[derive(Debug)]
-struct MalformedBytes;
-
-impl Inflator<'_> {
 
     /// Token decode decodes a token `(length)x(repetition)`
     /// and then counts `length` characters `repetition` times
     /// if recursive is true, it also inflates any nested tokens
-    fn token_decode(&mut self) -> Result<(), MalformedBytes> {
+    fn token_decode(&mut self) -> Result<(), MalformedToken> {
         let end_pos = self.reference_chars[self.pos..]
             .iter()
             .position(|c| c == &')')
-            .ok_or(MalformedBytes)?;
+            .ok_or(MalformedToken)?;
 
         let token_string = self.reference_chars[self.pos + 1..self.pos + end_pos]
             .iter()
             .collect::<String>();
-        let (l, r) = token_string.split_once("x").ok_or(MalformedBytes)?;
-        let length = l.parse::<usize>().map_err(|_| MalformedBytes)?;
-        let repetition = r.parse::<usize>().map_err(|_| MalformedBytes)?;
+        let (l, r) = token_string.split_once("x").ok_or(MalformedToken)?;
+        let length = l.parse::<usize>().map_err(|_| MalformedToken)?;
+        let repetition = r.parse::<usize>().map_err(|_| MalformedToken)?;
 
         if self.recursive {
             let sub_pos = self.pos + token_string.len() + 2;
+            if sub_pos + length > self.reference_chars.len() {
+                return Err(MalformedToken);
+            }
             let sub = &self.reference_chars[sub_pos..sub_pos + length];
             let mut inf = Inflator::new(sub, true);
             self.char_count += repetition * inf.count_inflated();
@@ -143,5 +146,64 @@ mod tests {
             445,
             true
         );
+    }
+
+    #[test]
+    fn edge_cases() {
+        // Empty input
+        assert_inflator!("", 0, false);
+        assert_inflator!("", 0, true);
+
+        // No markers
+        assert_inflator!("HELLO", 5, false);
+        assert_inflator!("HELLO", 5, true);
+
+        // Zero length
+        assert_inflator!("(0x5)ABC", 3, false);
+        assert_inflator!("(0x5)ABC", 3, true);
+
+        // Zero repetition
+        assert_inflator!("(3x0)ABC", 0, false);
+        assert_inflator!("(3x0)ABC", 0, true);
+
+        // Marker at end
+        assert_inflator!("ABC(1x2)D", 5, false); // ABC + DD
+        assert_inflator!("ABC(1x2)D", 5, true);
+
+        // Single character marker
+        assert_inflator!("A(1x3)B", 4, false); // A + BBB
+        assert_inflator!("A(1x3)B", 4, true); // A + BBB
+    }
+
+    #[test]
+    #[should_panic]
+    fn malformed_marker_missing_x() {
+        let chars: Vec<char> = "A(1)BC".chars().collect();
+        let mut inflator = Inflator::new(&chars, false);
+        inflator.count_inflated();
+    }
+
+    #[test]
+    #[should_panic]
+    fn malformed_marker_non_numeric_length() {
+        let chars: Vec<char> = "A(ax5)BC".chars().collect();
+        let mut inflator = Inflator::new(&chars, false);
+        inflator.count_inflated();
+    }
+
+    #[test]
+    #[should_panic]
+    fn malformed_marker_missing_repetition() {
+        let chars: Vec<char> = "A(1x)BC".chars().collect();
+        let mut inflator = Inflator::new(&chars, false);
+        inflator.count_inflated();
+    }
+
+    #[test]
+    #[should_panic]
+    fn incomplete_marker_no_closing_paren() {
+        let chars: Vec<char> = "A(1x5".chars().collect();
+        let mut inflator = Inflator::new(&chars, false);
+        inflator.count_inflated();
     }
 }

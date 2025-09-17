@@ -5,8 +5,8 @@ use inflator::Inflator;
 mod inflator;
 
 fn main() {
-    let chars = fs::read_to_string("input.txt")
-        .expect("Unable to read file")
+    let chars = fs::read_to_string("data/input.txt")
+        .expect("Unable to read file.")
         .trim()
         .chars()
         .collect::<Vec<_>>();
