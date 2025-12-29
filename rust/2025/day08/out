@@ -1,0 +1,34 @@
+
+running 5 tests
+test tests::test_dist ... ok
+test connection::tests::test_join_connection ... ok
+test connection::tests::test_gen_connection ... ok
+test connection::tests::test_merge_connection ... ok
+test tests::test_parse ... FAILED
+
+failures:
+
+---- tests::test_parse stdout ----
+Inserted: (162,817,812), (425,690,689) to 74ab9bd1-cfca-4f94-b7c5-d68628bb3d39(2)
+Inserted: (162,817,812), (431,825,988) to 74ab9bd1-cfca-4f94-b7c5-d68628bb3d39(3)
+Inserted: (906,360,560), (805, 96,715) to 4f1fd611-c8ea-4133-8d6c-a36f3bdc159f(2)
+Inserted: (431,825,988), (425,690,689) to 74ab9bd1-cfca-4f94-b7c5-d68628bb3d39(3)
+Inserted: (862, 61, 35), (984, 92,344) to 8b68d72c-aba5-450c-9461-a21a049e3cf5(2)
+Inserted: ( 52,470,668), (117,168,530) to e483a23a-3d18-473c-8e3d-57e74382c344(2)
+Inserted: (819,987, 18), (941,993,340) to aafc2756-6ada-4f58-ba1e-d5c7ad87077d(2)
+Inserted: (906,360,560), (739,650,466) to 4f1fd611-c8ea-4133-8d6c-a36f3bdc159f(3)
+Inserted: (346,949,466), (425,690,689) to 74ab9bd1-cfca-4f94-b7c5-d68628bb3d39(4)
+Inserted: (906,360,560), (984, 92,344) to 4f1fd611-c8ea-4133-8d6c-a36f3bdc159f(5)
+
+thread 'tests::test_parse' (8934241) panicked at src/main.rs:74:9:
+assertion `left == right` failed
+  left: 80
+ right: 40
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    tests::test_parse
+
+test result: FAILED. 4 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
